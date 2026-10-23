@@ -108,9 +108,12 @@ export default function App() {
         {/* Content based on Active Tab */}
         {activeTab === 'denah' && (
           <GSGFloorPlan
+            currentUser={currentUser}
             onSelectRoom={(roomCode) => {
               if (currentUser && currentUser.role === 'PJ') {
                 setActiveTab('pj');
+              } else if (currentUser && currentUser.role === 'PETUGAS') {
+                setActiveTab('petugas');
               } else {
                 setLoginModalOpen(true);
               }

@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Tv, AlertTriangle, CheckCircle, RefreshCw, Wrench, ArrowDownLeft, Shield } from 'lucide-react';
+import {
+  Tv,
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  Wrench,
+  ArrowDownLeft,
+  Shield,
+  Eye,
+  Calendar,
+  Clock,
+  BookOpen,
+  Filter,
+  XCircle
+} from 'lucide-react';
 
 export default function PetugasDashboard({ currentUser }) {
   const [projectors, setProjectors] = useState([]);
   const [loans, setLoans] = useState([]);
   const [reports, setReports] = useState([]);
+  const [reservations, setReservations] = useState([]);
+  const [resFilter, setResFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -15,15 +31,17 @@ export default function PetugasDashboard({ currentUser }) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [resPrj, resLoans, resReports] = await Promise.all([
+      const [resPrj, resLoans, resReports, resReservations] = await Promise.all([
         fetch('/api/projectors'),
         fetch('/api/projectors/loans'),
-        fetch('/api/reports')
+        fetch('/api/reports'),
+        fetch('/api/practicum')
       ]);
 
       if (resPrj.ok) setProjectors(await resPrj.json());
       if (resLoans.ok) setLoans(await resLoans.json());
       if (resReports.ok) setReports(await resReports.json());
+      if (resReservations.ok) setReservations(await resReservations.json());
     } catch (err) {
       console.error(err);
     } finally {
@@ -67,6 +85,20 @@ export default function PetugasDashboard({ currentUser }) {
     }
   };
 
+  const handleCancelReservation = async (reservationId) => {
+    if (!window.confirm('Batalkan pengajuan reservasi ruangan ini?')) return;
+    try {
+      const res = await fetch(`/api/practicum/${reservationId}/cancel`, {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Gagal membatalkan reservasi');
+      setMessage({ text: 'Reservasi berhasil dibatalkan oleh Petugas GSG.', type: 'success' });
+      loadData();
+    } catch (err) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Alert Banner Once UI Glass */}
@@ -89,7 +121,7 @@ export default function PetugasDashboard({ currentUser }) {
             Petugas Fasilitas GSG FT-UNTAD
           </span>
           <h2 className="text-xl font-semibold text-white tracking-tight mt-2.5">Pusat Kendali Petugas GSG</h2>
-          <p className="text-xs text-zinc-400 mt-0.5">Otoritas serah-terima unit proyektor (Unit 01 - 11) dan penanganan insiden kerusakan fasilitas.</p>
+          <p className="text-xs text-zinc-400 mt-0.5">Pemantauan reservasi ruangan GSG (SG 01 - SG 12), otoritas serah-terima unit proyektor, dan penanganan fasilitas.</p>
         </div>
         <button
           onClick={loadData}
@@ -98,6 +130,127 @@ export default function PetugasDashboard({ currentUser }) {
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
           Segarkan Data
         </button>
+      </div>
+
+      {/* SECTION: Monitoring Reservasi Ruangan GSG (Fokus Utama Petugas) */}
+      <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+            <div>
+              <h3 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
+                <Eye className="w-4 h-4 text-cyan-400" />
+                Pantauan Reservasi Ruangan GSG
+              </h3>
+              <p className="text-xs text-zinc-400">
+                Memantau siapa yang memesan/menggunakan ruangan GSG (Lantai 1 & 2), mata kuliah, dan status reservasi.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex items-center gap-1.5 bg-zinc-900/60 p-1 rounded-full border border-white/10 w-fit">
+            <button
+              onClick={() => setResFilter('ALL')}
+              className={`px-3 py-1 rounded-full text-xs font-mono transition ${
+                resFilter === 'ALL' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Semua ({reservations.length})
+            </button>
+            <button
+              onClick={() => setResFilter('PUBLISHED')}
+              className={`px-3 py-1 rounded-full text-xs font-mono transition ${
+                resFilter === 'PUBLISHED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Terbit Resmi ({reservations.filter(r => r.status === 'PUBLISHED').length})
+            </button>
+            <button
+              onClick={() => setResFilter('DRAFT')}
+              className={`px-3 py-1 rounded-full text-xs font-mono transition ${
+                resFilter === 'DRAFT' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Pengajuan Draft ({reservations.filter(r => r.status === 'DRAFT').length})
+            </button>
+          </div>
+        </div>
+
+        {/* Tabel Pantauan Reservasi */}
+        <div className="overflow-x-auto">
+          {reservations.length === 0 ? (
+            <div className="text-center py-10 text-zinc-500 text-xs font-mono">
+              Belum ada riwayat reservasi praktikum yang tercatat di GSG.
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-zinc-400 font-mono">
+                  <th className="py-2.5 px-3">Ruang GSG</th>
+                  <th className="py-2.5 px-3">Mata Kuliah / Keperluan</th>
+                  <th className="py-2.5 px-3">Pemohon (PJ Kelas)</th>
+                  <th className="py-2.5 px-3">Waktu Pelaksanaan</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Catatan</th>
+                  <th className="py-2.5 px-3 text-right">Aksi Petugas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 font-sans">
+                {reservations
+                  .filter(r => resFilter === 'ALL' || r.status === resFilter)
+                  .map((r) => (
+                    <tr key={r.id} className="hover:bg-white/[0.02] transition">
+                      <td className="py-3 px-3">
+                        <span className="font-mono font-semibold text-white bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                          {r.roomCode}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-medium text-white">{r.courseName}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="text-white font-medium">{r.pjName || 'PJ Mahasiswa'}</div>
+                        <div className="text-[11px] font-mono text-zinc-400">{r.pjNim}</div>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-zinc-300">
+                        <div>{r.date}</div>
+                        <div className="text-[11px] text-zinc-400">{r.startTime} - {r.endTime} WITA</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
+                            r.status === 'PUBLISHED'
+                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                              : r.status === 'DRAFT'
+                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                              : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                          }`}
+                        >
+                          {r.status === 'PUBLISHED' ? 'Resmi Terbit' : r.status === 'DRAFT' ? 'Draft PJ' : r.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-zinc-400 text-[11px] max-w-xs truncate">
+                        {r.notes || '-'}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        {r.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelReservation(r.id)}
+                            className="px-2.5 py-1 text-[11px] font-mono text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 rounded-full transition"
+                            title="Batalkan reservasi jika terjadi pelanggaran atau bentrok"
+                          >
+                            Batalkan
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Grid Status 11 Unit Proyektor */}

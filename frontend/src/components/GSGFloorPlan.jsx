@@ -11,10 +11,11 @@ import {
   CheckCircle,
   Sparkles,
   Info,
+  Shield,
   X
 } from 'lucide-react';
 
-export default function GSGFloorPlan({ onSelectRoom, onNavigateToTimetable }) {
+export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTimetable }) {
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
@@ -418,27 +419,60 @@ export default function GSGFloorPlan({ onSelectRoom, onNavigateToTimetable }) {
             </div>
 
             {/* Actions */}
-            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setActiveRoomModal(null)}
-                className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition"
-              >
-                Tutup
-              </button>
-              {onSelectRoom && (
+            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+              <div>
+                {currentUser?.role === 'PETUGAS' && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-cyan-300">
+                    <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                    Mode Monitoring Petugas GSG
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    const code = activeRoomModal.code;
-                    setActiveRoomModal(null);
-                    onSelectRoom(code);
-                  }}
-                  className="px-5 py-2 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-full shadow-sm transition"
+                  onClick={() => setActiveRoomModal(null)}
+                  className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition"
                 >
-                  Pilih Ruang Ini untuk Praktikum
+                  Tutup
                 </button>
-              )}
+                {currentUser?.role === 'PETUGAS' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveRoomModal(null);
+                      if (onSelectRoom) onSelectRoom(activeRoomModal.code);
+                    }}
+                    className="px-5 py-2 text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-zinc-950 rounded-full shadow-sm transition flex items-center gap-1.5"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    Pantau Semua Reservasi
+                  </button>
+                ) : currentUser?.role === 'PJ' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const code = activeRoomModal.code;
+                      setActiveRoomModal(null);
+                      if (onSelectRoom) onSelectRoom(code);
+                    }}
+                    className="px-5 py-2 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-full shadow-sm transition"
+                  >
+                    Ajukan Praktikum di Ruang Ini
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveRoomModal(null);
+                      if (onSelectRoom) onSelectRoom(activeRoomModal.code);
+                    }}
+                    className="px-5 py-2 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-full transition"
+                  >
+                    Masuk untuk Reservasi
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
