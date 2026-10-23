@@ -1,0 +1,22 @@
+{
+  "name": "sirama-backend",
+  "version": "1.0.0",
+  "description": "Backend for SIRAMA GSG Untad",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "node tests/task1_schema.test.js && node tests/task2_excel_parser.test.js && node tests/task3_auth.test.js && node tests/task4_availability.test.js && node tests/task5_practicum.test.js && node tests/task6_projector_reports.test.js",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}

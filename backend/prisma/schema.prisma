@@ -1,0 +1,101 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  nim       String   @unique
+  name      String
+  role      String   @default("PJ") // PJ, PETUGAS, DOSEN, GUEST
+  password  String   @default("password123")
+  createdAt DateTime @default(now())
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  code       String   @unique // e.g. "SG-5", "SG-6", "SG-7", "JTI-1", "JTI-2"
+  name       String
+  capacity   Int      @default(40)
+  facilities String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model WeeklySchedule {
+  id           String   @id @default(cuid())
+  dayOfWeek    String   // SENIN, SELASA, RABU, KAMIS, JUMAT, SABTU, MINGGU
+  startTime    String   // "07:30"
+  endTime      String   // "10:00"
+  courseName   String
+  sks          Int      @default(3)
+  roomCode     String
+  lecturer     String
+  semester     String   @default("3")
+  academicYear String   @default("2026/2027")
+  createdAt    DateTime @default(now())
+}
+
+model ScheduleOverride {
+  id          String   @id @default(cuid())
+  date        String   // "YYYY-MM-DD"
+  roomCode    String
+  courseName  String?
+  status      String   // "ONLINE", "RELEASED", "RESCHEDULED"
+  newStartTime String?
+  newEndTime   String?
+  newRoomCode  String?
+  notes       String?
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+}
+
+model PracticumReservation {
+  id        String   @id @default(cuid())
+  roomCode  String
+  date      String   // "YYYY-MM-DD"
+  startTime String   // "10:00"
+  endTime   String   // "12:00"
+  title     String
+  status    String   @default("DRAFT") // "DRAFT", "PUBLISHED", "CANCELLED"
+  pjNim     String
+  pjName    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Projector {
+  id        String   @id @default(cuid())
+  code      String   @unique // "01", "02", ..., "11"
+  status    String   @default("AVAILABLE") // "AVAILABLE", "IN_USE", "BROKEN"
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model ProjectorLoan {
+  id            String    @id @default(cuid())
+  projectorCode String
+  roomCode      String
+  reservationId String?
+  borrowerName  String
+  borrowerNim   String?
+  status        String    @default("BORROWED") // "BORROWED", "RETURNED"
+  borrowedAt    DateTime  @default(now())
+  returnedAt    DateTime?
+  returnNotes   String?
+}
+
+model DamageReport {
+  id           String   @id @default(cuid())
+  targetType   String   // "ROOM", "PROJECTOR", "GENERAL_FACILITY"
+  targetCode   String   // "SG-5", "02", "Toilet Lantai 1", etc.
+  reporterName String
+  description  String
+  status       String   @default("PENDING") // "PENDING", "IN_PROGRESS", "RESOLVED"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
