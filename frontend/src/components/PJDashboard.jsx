@@ -83,6 +83,32 @@ export default function PJDashboard({ currentUser }) {
     }
   };
 
+  const handleCreateAndPublish = async () => {
+    setMessage({ text: '', type: '' });
+    try {
+      const res = await fetch('/api/practicum/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          organizerNim: currentUser.nim,
+          organizerName: currentUser.name
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal membuat reservasi');
+
+      const pubRes = await fetch(`/api/practicum/${data.id}/publish`, { method: 'POST' });
+      const pubData = await pubRes.json();
+      if (!pubRes.ok) throw new Error(pubData.error || 'Gagal menerbitkan reservasi');
+
+      setMessage({ text: 'Reservasi praktikum berhasil dibuat dan langsung DITERBITKAN anti-bentrok!', type: 'success' });
+      loadData();
+    } catch (err) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
   const handlePublish = async (id) => {
     setMessage({ text: '', type: '' });
     try {
@@ -267,6 +293,13 @@ export default function PJDashboard({ currentUser }) {
                 className="flex-1 py-2.5 text-xs font-medium glass-pill hover:bg-white/10 text-zinc-300 hover:text-white rounded-xl border border-white/10 transition"
               >
                 Simpan Draft
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateAndPublish}
+                className="flex-1 py-2.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.25)] transition"
+              >
+                Terbitkan Langsung
               </button>
             </div>
           </div>
