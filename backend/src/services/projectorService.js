@@ -4,7 +4,54 @@ async function getProjectors() {
   const projectors = await prisma.projector.findMany({
     orderBy: { code: 'asc' }
   });
-  return projectors;
+
+  const enriched = await Promise.all(
+    projectors.map(async (p) => {
+      const activeLoan = await prisma.projectorLoan.findFirst({
+        where: { projectorCode: p.code, status: 'BORROWED' },
+        orderBy: { borrowedAt: 'desc' }
+      });
+
+      const recentHistory = await prisma.projectorLoan.findMany({
+        where: { projectorCode: p.code },
+        orderBy: { borrowedAt: 'desc' },
+        take: 5
+      });
+
+      return {
+        ...p,
+        isUsed: p.status === 'IN_USE',
+        currentLoan: activeLoan ? {
+          id: activeLoan.id,
+          borrowerName: activeLoan.borrowerName,
+          borrowerNim: activeLoan.borrowerNim,
+          roomCode: activeLoan.roomCode,
+          borrowedAt: activeLoan.borrowedAt,
+          reservationId: activeLoan.reservationId
+        } : null,
+        history: recentHistory.map((h) => ({
+          id: h.id,
+          borrowerName: h.borrowerName,
+          borrowerNim: h.borrowerNim,
+          roomCode: h.roomCode,
+          status: h.status,
+          borrowedAt: h.borrowedAt,
+          returnedAt: h.returnedAt,
+          returnNotes: h.returnNotes
+        }))
+      };
+    })
+  );
+
+  return enriched;
+}
+
+async function getProjectorHistory(code) {
+  return await prisma.projectorLoan.findMany({
+    where: { projectorCode: code },
+    orderBy: { borrowedAt: 'desc' },
+    take: 10
+  });
 }
 
 async function borrowProjector({ projectorCode, reservationId, borrowerName, borrowerNim }) {
@@ -109,6 +156,7 @@ async function getLoans(status) {
 
 module.exports = {
   getProjectors,
+  getProjectorHistory,
   borrowProjector,
   returnProjector,
   getLoans

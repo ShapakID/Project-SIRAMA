@@ -27,6 +27,7 @@ export default function PetugasDashboard({ currentUser }) {
   // Return modal state
   const [returnLoanId, setReturnLoanId] = useState(null);
   const [conditionNotes, setConditionNotes] = useState('Kondisi baik dan lengkap');
+  const [selectedProjectorLog, setSelectedProjectorLog] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -255,34 +256,72 @@ export default function PetugasDashboard({ currentUser }) {
 
       {/* Grid Status 11 Unit Proyektor */}
       <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-4">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-          <h3 className="text-base font-semibold text-white tracking-tight">
-            Status 11 Unit Proyektor GSG
-          </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+            <h3 className="text-base font-semibold text-white tracking-tight">
+              Status 11 Unit Proyektor GSG & Audit Trail
+            </h3>
+          </div>
+          <span className="text-[11px] text-zinc-400 font-mono">
+            Klik unit untuk melihat riwayat log 5 peminjam terakhir
+          </span>
         </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {projectors.map((p) => (
-            <div
-              key={p.code}
-              className={`glass-panel-hover p-4 rounded-2xl border text-center transition-all ${
-                p.status === 'AVAILABLE'
-                  ? 'bg-emerald-500/[0.04] border-emerald-500/20'
-                  : p.status === 'IN_USE'
-                  ? 'bg-cyan-500/[0.04] border-cyan-500/20'
-                  : 'bg-rose-500/[0.04] border-rose-500/20'
-              }`}
-            >
-              <div className="font-mono font-semibold text-base text-white">Unit {p.code}</div>
-              <div className="text-[11px] text-zinc-400 mt-0.5">{p.brand}</div>
-              <span className={`inline-flex items-center gap-1 mt-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
-                p.status === 'AVAILABLE' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
-                p.status === 'IN_USE' ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
-              }`}>
-                {p.status}
-              </span>
-            </div>
-          ))}
+          {projectors.map((p) => {
+            const isUsed = p.isUsed || p.status === 'IN_USE';
+            const isBroken = p.status === 'BROKEN';
+            return (
+              <div
+                key={p.code}
+                onClick={() => setSelectedProjectorLog(p)}
+                className={`glass-panel-hover p-4 rounded-2xl border text-center transition-all cursor-pointer group flex flex-col justify-between ${
+                  isUsed
+                    ? 'bg-amber-500/[0.06] border-amber-500/30 hover:border-amber-400/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]'
+                    : isBroken
+                    ? 'bg-rose-500/[0.06] border-rose-500/30 hover:border-rose-400/50 hover:shadow-[0_0_20px_rgba(244,63,94,0.2)]'
+                    : 'bg-emerald-500/[0.04] border-emerald-500/20 hover:border-emerald-400/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase">Unit</span>
+                    <span className="text-[10px] text-cyan-400/80 group-hover:text-cyan-300 font-medium">Log →</span>
+                  </div>
+                  <div className="font-mono font-bold text-lg text-white">Unit {p.code}</div>
+
+                  {isUsed && p.currentLoan ? (
+                    <div className="mt-2 text-[10px] text-amber-200/90 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 text-left">
+                      <div className="font-semibold truncate">{p.currentLoan.borrowerName}</div>
+                      <div className="text-zinc-400 font-mono">{p.currentLoan.roomCode}</div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-zinc-400 mt-1">{p.brand || 'GSG Standard'}</div>
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border ${
+                    isUsed
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      : isBroken
+                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      isUsed
+                        ? 'bg-amber-400 animate-pulse'
+                        : isBroken
+                        ? 'bg-rose-400'
+                        : 'bg-emerald-400'
+                    }`} />
+                    {isUsed ? 'TERPAKAI' : isBroken ? 'RUSAK' : 'TERSEDIA'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -411,6 +450,147 @@ export default function PetugasDashboard({ currentUser }) {
           </div>
         )}
       </div>
+
+      {/* Projector Audit Log Modal */}
+      {selectedProjectorLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="glass-panel rounded-3xl max-w-2xl w-full p-6 sm:p-7 border border-white/10 text-zinc-100 shadow-2xl shadow-black space-y-5">
+            <div className="flex items-start justify-between border-b border-white/10 pb-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <span className="font-mono font-bold text-xl text-white">Unit {selectedProjectorLog.code}</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full font-mono bg-zinc-800 text-zinc-300 border border-white/10">
+                    {selectedProjectorLog.brand || 'GSG Standard'}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 mt-1">Riwayat Log & Audit Penggunaan Proyektor GSG</p>
+              </div>
+
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
+                selectedProjectorLog.isUsed || selectedProjectorLog.status === 'IN_USE'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                  : selectedProjectorLog.status === 'BROKEN'
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  selectedProjectorLog.isUsed || selectedProjectorLog.status === 'IN_USE'
+                    ? 'bg-amber-400 animate-pulse'
+                    : selectedProjectorLog.status === 'BROKEN'
+                    ? 'bg-rose-400'
+                    : 'bg-emerald-400'
+                }`} />
+                {selectedProjectorLog.isUsed || selectedProjectorLog.status === 'IN_USE'
+                  ? 'SEDANG TERPAKAI'
+                  : selectedProjectorLog.status === 'BROKEN'
+                  ? 'UNIT RUSAK'
+                  : 'TERSEDIA DI GSG'}
+              </span>
+            </div>
+
+            {/* Current Active Loan Info (if any) */}
+            {selectedProjectorLog.currentLoan ? (
+              <div className="p-4 rounded-2xl bg-amber-500/[0.08] border border-amber-500/30 space-y-2">
+                <div className="text-xs font-semibold text-amber-300 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  Informasi Peminjaman Berjalan Saat Ini
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div>
+                    <span className="text-zinc-500 block text-[10px]">Peminjam</span>
+                    <span className="font-semibold text-white">{selectedProjectorLog.currentLoan.borrowerName}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block text-[10px]">NIM</span>
+                    <span className="font-mono text-zinc-200">{selectedProjectorLog.currentLoan.borrowerNim}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block text-[10px]">Ruang Digunakan</span>
+                    <span className="font-mono font-semibold text-cyan-300">{selectedProjectorLog.currentLoan.roomCode}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 block text-[10px]">Waktu Pinjam</span>
+                    <span className="font-mono text-zinc-300">
+                      {new Date(selectedProjectorLog.currentLoan.borrowedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/[0.05] border border-emerald-500/20 text-xs text-emerald-300 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Unit proyektor ini dalam kondisi standby dan siap dipinjamkan kepada PJ Praktikum.</span>
+              </div>
+            )}
+
+            {/* 5 Riwayat Terakhir */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider font-mono">
+                5 Riwayat Peminjaman Terakhir
+              </h4>
+
+              {(!selectedProjectorLog.history || selectedProjectorLog.history.length === 0) ? (
+                <div className="p-6 text-center text-xs text-zinc-500 border border-white/5 rounded-2xl">
+                  Belum ada riwayat peminjaman untuk unit ini.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-white/10">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-white/[0.03] text-zinc-400 font-mono text-[11px] border-b border-white/10">
+                      <tr>
+                        <th className="px-3 py-2.5">Waktu Pinjam</th>
+                        <th className="px-3 py-2.5">Peminjam</th>
+                        <th className="px-3 py-2.5">Ruang</th>
+                        <th className="px-3 py-2.5">Status Pengembalian</th>
+                        <th className="px-3 py-2.5">Catatan</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {selectedProjectorLog.history.map((h) => (
+                        <tr key={h.id} className="hover:bg-white/[0.02]">
+                          <td className="px-3 py-2 text-zinc-300 font-mono text-[11px]">
+                            {new Date(h.borrowedAt).toLocaleDateString([], { day: '2-digit', month: 'short' })}{' '}
+                            {new Date(h.borrowedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="font-medium text-white">{h.borrowerName}</div>
+                            <div className="text-[10px] text-zinc-500 font-mono">{h.borrowerNim}</div>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-cyan-300 font-semibold">{h.roomCode}</td>
+                          <td className="px-3 py-2">
+                            {h.returnedAt ? (
+                              <span className="text-[10px] text-emerald-400 font-mono">
+                                Kembali {new Date(h.returnedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-amber-400 font-mono font-semibold">
+                                Masih Dipinjam
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-400 text-[11px] max-w-[150px] truncate">
+                            {h.conditionNotes || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedProjectorLog(null)}
+                className="px-5 py-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl border border-white/10 transition"
+              >
+                Tutup Log
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Return Modal Once UI Glass Style */}
       {returnLoanId && (

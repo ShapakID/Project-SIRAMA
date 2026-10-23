@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import GSGFloorPlan from './components/GSGFloorPlan';
 import RoomTimetable from './components/RoomTimetable';
+import ProjectorCatalog from './components/ProjectorCatalog';
 import PJDashboard from './components/PJDashboard';
 import PetugasDashboard from './components/PetugasDashboard';
 import { Shield, Tv, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
@@ -175,15 +176,10 @@ export default function App() {
         )}
 
         {activeTab === 'proyektor' && (
-          <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-white/10 text-center shadow-xl shadow-black/40">
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mx-auto mb-4 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-              <Tv className="w-7 h-7" />
-            </div>
-            <h3 className="text-xl font-semibold text-white tracking-tight">Katalog 11 Unit Proyektor GSG (Unit 01 - 11)</h3>
-            <p className="text-xs text-zinc-400 max-w-md mx-auto mt-2 leading-relaxed">
-              Peminjaman proyektor terikat pada jadwal reservasi ruangan aktif berstatus PUBLISHED. Kelola alur peminjaman melalui Panel PJ Kelas atau Panel Petugas GSG.
-            </p>
-          </div>
+          <ProjectorCatalog
+            currentUser={currentUser}
+            onOpenLogin={() => setLoginModalOpen(true)}
+          />
         )}
 
         {activeTab === 'pj' && (

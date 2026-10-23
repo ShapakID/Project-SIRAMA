@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   getProjectors,
+  getProjectorHistory,
   borrowProjector,
   returnProjector,
   getLoans
@@ -12,6 +13,15 @@ router.get('/', async (req, res) => {
   try {
     const list = await getProjectors();
     res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:code/history', async (req, res) => {
+  try {
+    const history = await getProjectorHistory(req.params.code);
+    res.json(history);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

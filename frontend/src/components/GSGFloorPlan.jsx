@@ -23,6 +23,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
   const [roomsData, setRoomsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeRoomModal, setActiveRoomModal] = useState(null);
+  const [filterEmptyNow, setFilterEmptyNow] = useState(false);
 
   useEffect(() => {
     fetchFloorStatus();
@@ -111,15 +112,34 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
     }
   };
 
+  const checkIsOccupiedNow = (room) => {
+    if (!room || !room.slots || room.slots.length === 0) return false;
+    const now = new Date();
+    const currentHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    return room.slots.some((s) => {
+      if (s.status === 'AVAILABLE') return false;
+      return s.startTime <= currentHM && s.endTime >= currentHM;
+    });
+  };
+
   const renderRoomCard = (roomCode, positionLabel) => {
     const room = getRoom(roomCode);
     const isLab = roomCode === 'Lab-Komputer';
+    const isOccupiedNow = checkIsOccupiedNow(room);
+    const isDimmed = filterEmptyNow && isOccupiedNow;
+    const isHighlighted = filterEmptyNow && !isOccupiedNow;
 
     return (
       <div
         key={roomCode}
         onClick={() => setActiveRoomModal(room)}
-        className="group relative rounded-2xl border border-white/10 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-cyan-400/40 backdrop-blur-xl p-4 sm:p-5 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] cursor-pointer flex flex-col justify-between min-h-[145px]"
+        className={`group relative rounded-2xl border backdrop-blur-xl p-4 sm:p-5 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[145px] ${
+          isDimmed
+            ? 'opacity-25 grayscale border-white/5 bg-zinc-950/40 hover:opacity-100 hover:grayscale-0'
+            : isHighlighted
+            ? 'bg-emerald-500/[0.08] border-emerald-500/40 shadow-[0_0_25px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/30 scale-[1.01]'
+            : 'border-white/10 bg-zinc-900/60 hover:bg-zinc-800/80 hover:border-cyan-400/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)]'
+        }`}
       >
         {/* Subtle hover gradient glow */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/0 via-transparent to-white/[0.02] group-hover:from-cyan-500/[0.04] transition duration-500 pointer-events-none" />
@@ -128,7 +148,9 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-bold font-mono tracking-tight text-white group-hover:text-cyan-300 transition">
+                <span className={`text-base sm:text-lg font-bold font-mono tracking-tight transition ${
+                  isHighlighted ? 'text-emerald-300' : 'text-white group-hover:text-cyan-300'
+                }`}>
                   {room.displayCode}
                 </span>
                 {isLab && (
@@ -139,7 +161,22 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">{positionLabel}</p>
             </div>
-            {renderStatusBadge(room.summaryStatus)}
+
+            {filterEmptyNow ? (
+              isOccupiedNow ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-white/10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                  Terisi Jam Ini
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
+                  Kosong Jam Ini
+                </span>
+              )
+            ) : (
+              renderStatusBadge(room.summaryStatus)
+            )}
           </div>
 
           <div className="mt-3">
@@ -190,8 +227,24 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
             </p>
           </div>
 
-          {/* Controls: Date Picker & Floor Selector */}
+          {/* Controls: Date Picker, Floor Selector & Kosong Sekarang Toggle */}
           <div className="flex flex-wrap items-center gap-3">
+            {/* Quick Filter: Ruang Kosong Jam Ini */}
+            <button
+              onClick={() => setFilterEmptyNow(!filterEmptyNow)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-2xl border text-xs font-medium transition-all duration-200 cursor-pointer ${
+                filterEmptyNow
+                  ? 'bg-emerald-500 text-zinc-950 border-emerald-400 font-bold shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+                  : 'bg-zinc-900/60 text-zinc-300 hover:text-white border-white/10 hover:border-emerald-500/30'
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${filterEmptyNow ? 'text-zinc-950 fill-zinc-950' : 'text-emerald-400'}`} />
+              <span>Ruang Kosong Sekarang</span>
+              {filterEmptyNow && (
+                <span className="w-2 h-2 rounded-full bg-zinc-950 animate-ping" />
+              )}
+            </button>
+
             <div className="flex items-center gap-2 glass-pill px-3.5 py-2 rounded-2xl border border-white/10 bg-zinc-900/60">
               <Calendar className="w-4 h-4 text-cyan-400" />
               <input
