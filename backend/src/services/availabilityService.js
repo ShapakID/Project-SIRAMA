@@ -142,9 +142,61 @@ async function getRoomAvailability(roomCode, dateStr) {
   return slots;
 }
 
+async function getFloorRoomsStatus(dateStr) {
+  const rooms = await prisma.room.findMany({
+    where: { isActive: true },
+    orderBy: { code: 'asc' }
+  });
+
+  const results = [];
+  for (const r of rooms) {
+    const slots = await getRoomAvailability(r.code, dateStr);
+    let summaryStatus = 'AVAILABLE';
+    let activeSchedule = null;
+
+    if (slots.some(s => s.status === 'MAINTENANCE')) {
+      summaryStatus = 'MAINTENANCE';
+      activeSchedule = 'Perbaikan Fasilitas';
+    } else if (slots.some(s => s.status === 'PRACTICUM')) {
+      const p = slots.find(s => s.status === 'PRACTICUM');
+      summaryStatus = 'PRACTICUM';
+      activeSchedule = `${p.title} (${p.startTime}-${p.endTime})`;
+    } else if (slots.some(s => s.status === 'OCCUPIED_CLASS')) {
+      const c = slots.find(s => s.status === 'OCCUPIED_CLASS');
+      summaryStatus = 'OCCUPIED';
+      activeSchedule = `${c.courseName} (${c.startTime}-${c.endTime})`;
+    }
+
+    let displayCode = r.code;
+    const match = r.code.match(/^SG-(\d+)$/);
+    if (match) {
+      displayCode = `SG ${match[1].padStart(2, '0')}`;
+    } else if (r.code === 'Lab-Komputer') {
+      displayCode = 'Lab-Komputer';
+    }
+
+    results.push({
+      id: r.id,
+      code: r.code,
+      displayCode,
+      name: r.name,
+      floor: r.floor,
+      capacity: r.capacity,
+      facilities: r.facilities,
+      summaryStatus,
+      activeSchedule,
+      slotsCount: slots.length,
+      slots
+    });
+  }
+
+  return results;
+}
+
 module.exports = {
   getDayOfWeek,
   importSchedulesFromExcel,
   applyOverride,
-  getRoomAvailability
+  getRoomAvailability,
+  getFloorRoomsStatus
 };

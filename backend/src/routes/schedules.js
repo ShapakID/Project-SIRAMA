@@ -4,7 +4,8 @@ const prisma = require('../db');
 const {
   getRoomAvailability,
   applyOverride,
-  importSchedulesFromExcel
+  importSchedulesFromExcel,
+  getFloorRoomsStatus
 } = require('../services/availabilityService');
 
 const router = express.Router();
@@ -14,6 +15,17 @@ router.get('/rooms', async (req, res) => {
   try {
     const rooms = await prisma.room.findMany({ where: { isActive: true } });
     res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get floor rooms status for 2D floor plan
+router.get('/floor-status', async (req, res) => {
+  try {
+    const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+    const data = await getFloorRoomsStatus(dateStr);
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

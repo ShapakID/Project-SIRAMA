@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 const ROOM_OPTIONS = [
-  'SG-1', 'SG-2', 'SG-3', 'SG-4', 'SG-5', 'SG-6', 'SG-7', 'SG-8', 'JTI-1', 'JTI-2'
+  'SG-1', 'SG-2', 'SG-3', 'SG-4', 'SG-5', 'SG-6', 'SG-7', 'SG-8', 'SG-9', 'SG-10', 'SG-11', 'Lab-Komputer'
 ];
 
 export default function RoomTimetable({ onSelectSlot }) {

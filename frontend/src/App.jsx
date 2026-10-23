@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import GSGFloorPlan from './components/GSGFloorPlan';
 import RoomTimetable from './components/RoomTimetable';
 import PJDashboard from './components/PJDashboard';
 import PetugasDashboard from './components/PetugasDashboard';
@@ -10,7 +11,7 @@ export default function App() {
     const saved = localStorage.getItem('sirama_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [activeTab, setActiveTab] = useState('jadwal');
+  const [activeTab, setActiveTab] = useState('denah');
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
@@ -105,6 +106,19 @@ export default function App() {
         </div>
 
         {/* Content based on Active Tab */}
+        {activeTab === 'denah' && (
+          <GSGFloorPlan
+            onSelectRoom={(roomCode) => {
+              if (currentUser && currentUser.role === 'PJ') {
+                setActiveTab('pj');
+              } else {
+                setLoginModalOpen(true);
+              }
+            }}
+            onNavigateToTimetable={() => setActiveTab('jadwal')}
+          />
+        )}
+
         {activeTab === 'jadwal' && (
           <RoomTimetable />
         )}

@@ -12,7 +12,16 @@ function formatExcelTime(val) {
 function normalizeRoomCode(code) {
   if (!code) return '';
   const trimmed = String(code).trim();
-  return trimmed.replace(/^SG\s*(\d+)$/i, 'SG-$1');
+  const match = trimmed.match(/^SG\s*0*(\d+)$/i);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    if (num === 12) return 'Lab-Komputer';
+    return `SG-${num}`;
+  }
+  if (/^Lab\s*-?\s*Komputer$/i.test(trimmed)) {
+    return 'Lab-Komputer';
+  }
+  return trimmed;
 }
 
 function parseScheduleExcel(filePath) {
@@ -46,13 +55,19 @@ function parseScheduleExcel(filePath) {
         continue;
       }
 
+      const roomCode = normalizeRoomCode(roomVal);
+      // Skip non-GSG rooms (e.g. JTI) as instructed
+      if (!roomCode || roomCode.toUpperCase().startsWith('JTI')) {
+        continue;
+      }
+
       results.push({
         dayOfWeek: currentDay,
         startTime: formatExcelTime(startVal),
         endTime: formatExcelTime(endVal),
         courseName,
         sks: Number(sksVal) || 2,
-        roomCode: normalizeRoomCode(roomVal),
+        roomCode,
         lecturer: lecturerVal
       });
     }

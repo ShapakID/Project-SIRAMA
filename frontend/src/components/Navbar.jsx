@@ -25,6 +25,16 @@ export default function Navbar({ currentUser, onOpenLogin, onLogout, activeTab, 
           {/* Navigation Pill Tabs */}
           <nav className="hidden md:flex items-center p-1 bg-zinc-950/50 rounded-full border border-white/5 space-x-1">
             <button
+              onClick={() => setActiveTab('denah')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                activeTab === 'denah'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+              }`}
+            >
+              Denah Lantai GSG
+            </button>
+            <button
               onClick={() => setActiveTab('jadwal')}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                 activeTab === 'jadwal'

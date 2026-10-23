@@ -18,8 +18,9 @@ model User {
 
 model Room {
   id         String   @id @default(cuid())
-  code       String   @unique // e.g. "SG-5", "SG-6", "SG-7", "JTI-1", "JTI-2"
+  code       String   @unique // e.g. "SG-1" to "SG-11", "Lab-Komputer"
   name       String
+  floor      Int      @default(1)
   capacity   Int      @default(40)
   facilities String?
   isActive   Boolean  @default(true)
