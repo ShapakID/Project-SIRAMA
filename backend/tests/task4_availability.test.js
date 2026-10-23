@@ -5,6 +5,12 @@ const { parseScheduleExcel } = require('../src/services/excelParser');
 const { getRoomAvailability, applyOverride } = require('../src/services/availabilityService');
 
 async function testAvailability() {
+  // Clean up any existing overrides for test date
+  const dateStr = '2026-10-26';
+  await prisma.scheduleOverride.deleteMany({
+    where: { roomCode: 'SG-7', date: dateStr }
+  });
+
   // Ensure weekly schedules are populated from Excel if not already
   const count = await prisma.weeklySchedule.count();
   if (count === 0) {
@@ -16,7 +22,6 @@ async function testAvailability() {
   }
 
   // 2026-10-26 is a Monday (SENIN)
-  const dateStr = '2026-10-26';
   const before = await getRoomAvailability('SG-7', dateStr);
   assert(before.some(s => s.status === 'OCCUPIED_CLASS'), 'Should show official class on SG-7');
 
