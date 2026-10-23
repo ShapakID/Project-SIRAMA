@@ -3,6 +3,8 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const scheduleRoutes = require('./routes/schedules');
 const practicumRoutes = require('./routes/practicum');
+const projectorRoutes = require('./routes/projectors');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 
@@ -13,6 +15,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/practicum', practicumRoutes);
+app.use('/api/projectors', projectorRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
