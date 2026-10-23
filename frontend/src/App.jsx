@@ -8,12 +8,57 @@ import { Shield, Tv, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('sirama_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('sirama_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
-  const [activeTab, setActiveTab] = useState('denah');
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem('sirama_tab');
+    if (savedTab) return savedTab;
+    const savedUser = localStorage.getItem('sirama_user');
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        if (u.role === 'PETUGAS') return 'petugas';
+        if (u.role === 'PJ') return 'pj';
+      } catch {}
+    }
+    return 'denah';
+  });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  // Auto-verify session token on startup
+  useEffect(() => {
+    const token = localStorage.getItem('sirama_token');
+    if (token) {
+      fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error('Session expired');
+        })
+        .then((user) => {
+          setCurrentUser(user);
+          localStorage.setItem('sirama_user', JSON.stringify(user));
+        })
+        .catch(() => {
+          // If token invalid, clear
+          setCurrentUser(null);
+          localStorage.removeItem('sirama_user');
+          localStorage.removeItem('sirama_token');
+        });
+    }
+  }, []);
+
+  const switchTab = (tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('sirama_tab', tab);
+  };
 
   // Login form state
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -43,9 +88,10 @@ export default function App() {
       
       setCurrentUser(data.user);
       localStorage.setItem('sirama_user', JSON.stringify(data.user));
+      if (data.token) localStorage.setItem('sirama_token', data.token);
       setLoginModalOpen(false);
-      if (data.user.role === 'PJ') setActiveTab('pj');
-      if (data.user.role === 'PETUGAS') setActiveTab('petugas');
+      const targetTab = data.user.role === 'PJ' ? 'pj' : 'petugas';
+      switchTab(targetTab);
     } catch (err) {
       setLoginError(err.message);
     }
@@ -54,7 +100,9 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('sirama_user');
-    setActiveTab('jadwal');
+    localStorage.removeItem('sirama_token');
+    localStorage.removeItem('sirama_tab');
+    switchTab('denah');
   };
 
   const handleReportSubmit = async (e) => {
@@ -83,7 +131,7 @@ export default function App() {
         onOpenLogin={() => setLoginModalOpen(true)}
         onLogout={handleLogout}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={switchTab}
         onOpenReportModal={() => setReportModalOpen(true)}
       />
 
@@ -111,14 +159,14 @@ export default function App() {
             currentUser={currentUser}
             onSelectRoom={(roomCode) => {
               if (currentUser && currentUser.role === 'PJ') {
-                setActiveTab('pj');
+                switchTab('pj');
               } else if (currentUser && currentUser.role === 'PETUGAS') {
-                setActiveTab('petugas');
+                switchTab('petugas');
               } else {
                 setLoginModalOpen(true);
               }
             }}
-            onNavigateToTimetable={() => setActiveTab('jadwal')}
+            onNavigateToTimetable={() => switchTab('jadwal')}
           />
         )}
 
