@@ -159,99 +159,104 @@ export default function PJDashboard({ currentUser }) {
 
   return (
     <div className="space-y-6">
-      {/* Alert Banner */}
+      {/* Alert Banner Once UI Glass */}
       {message.text && (
-        <div className={`p-4 rounded-xl text-sm flex items-center justify-between border ${
-          message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-rose-50 text-rose-800 border-rose-300'
+        <div className={`p-4 rounded-2xl text-xs flex items-center justify-between border ${
+          message.type === 'success'
+            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+            : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
         }`}>
           <span>{message.text}</span>
-          <button onClick={() => setMessage({ text: '', type: '' })} className="font-bold ml-4">✕</button>
+          <button onClick={() => setMessage({ text: '', type: '' })} className="font-bold ml-4 text-zinc-400 hover:text-white">✕</button>
         </div>
       )}
 
-      {/* Profil PJ */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Profil PJ Once UI Glass */}
+      <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
-            Penanggung Jawab (PJ) Mata Kuliah
+          <span className="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full glass-pill text-amber-300 border border-amber-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            PJ Kelas Aktif (SI-A 2025)
           </span>
-          <h2 className="text-xl font-bold text-slate-800 mt-2">{currentUser.name}</h2>
-          <p className="text-xs text-slate-500 font-mono">NIM: {currentUser.nim} • Jurusan Teknologi Informasi</p>
+          <h2 className="text-xl font-semibold text-white tracking-tight mt-2.5">{currentUser.name}</h2>
+          <p className="text-xs text-zinc-400 font-mono mt-0.5">NIM: {currentUser.nim} • Jurusan Teknologi Informasi</p>
         </div>
         <button
           onClick={loadData}
-          className="flex items-center gap-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 transition w-fit"
+          className="flex items-center gap-2 text-xs glass-pill hover:bg-white/10 text-zinc-300 hover:text-white px-4 py-2 rounded-full border border-white/10 transition w-fit"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
           Segarkan Data
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Kolom Kiri: Reservasi Praktikum */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-blue-600" />
-              Buat Jadwal Praktikum Baru
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Reservasi langsung sah saat ditekan 'Terbitkan' jika tidak terjadi bentrok.</p>
+        <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
+          <div className="border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+              <h3 className="text-base font-semibold text-white tracking-tight">
+                Buat Jadwal Praktikum Baru
+              </h3>
+            </div>
+            <p className="text-xs text-zinc-400 mt-1">Reservasi langsung sah saat diterbitkan jika tidak terjadi bentrok.</p>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Ruangan GSG</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan GSG</label>
                 <select
                   value={formData.roomCode}
                   onChange={(e) => setFormData({ ...formData, roomCode: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 >
                   {ROOM_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Tanggal</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tanggal</label>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Jam Mulai</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Mulai</label>
                 <input
                   type="time"
                   value={formData.startTime}
                   onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Jam Selesai</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Selesai</label>
                 <input
                   type="time"
                   value={formData.endTime}
                   onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700">Nama Praktikum & Modul</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Nama Praktikum & Modul</label>
               <input
                 type="text"
                 placeholder="Contoh: Praktikum RPL - Modul 2 UML & Activity Diagram"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
               />
             </div>
 
@@ -259,7 +264,7 @@ export default function PJDashboard({ currentUser }) {
               <button
                 type="button"
                 onClick={handleCreateDraft}
-                className="flex-1 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition"
+                className="flex-1 py-2.5 text-xs font-medium glass-pill hover:bg-white/10 text-zinc-300 hover:text-white rounded-xl border border-white/10 transition"
               >
                 Simpan Draft
               </button>
@@ -270,95 +275,99 @@ export default function PJDashboard({ currentUser }) {
         {/* Kolom Kanan: Lepas Ruangan (Override) & Sewa Proyektor */}
         <div className="space-y-6">
           {/* Form Lepas Ruangan */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-500" />
-                Lepaskan Slot Kelas (Daring / Dosen Kosong)
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Membuat slot kuliah reguler menjadi KOSONG sehingga bisa dipakai praktikum.</p>
+          <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-4">
+            <div className="border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                <h3 className="text-base font-semibold text-white tracking-tight">
+                  Lepaskan Slot Kuliah (Daring / Kosong)
+                </h3>
+              </div>
+              <p className="text-xs text-zinc-400 mt-1">Mengubah slot kuliah SIGA menjadi TERSEDIA untuk praktikum.</p>
             </div>
 
             <form onSubmit={handleCreateOverride} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">Ruangan</label>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan</label>
                   <select
                     value={overrideData.roomCode}
                     onChange={(e) => setOverrideData({ ...overrideData, roomCode: e.target.value })}
-                    className="mt-1 w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs"
+                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                   >
                     {ROOM_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">Tanggal</label>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tanggal</label>
                   <input
                     type="date"
                     value={overrideData.date}
                     onChange={(e) => setOverrideData({ ...overrideData, date: e.target.value })}
-                    className="mt-1 w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs"
+                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">Jam Mulai</label>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Mulai</label>
                   <input
                     type="time"
                     value={overrideData.startTime}
                     onChange={(e) => setOverrideData({ ...overrideData, startTime: e.target.value })}
-                    className="mt-1 w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs"
+                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">Jam Selesai</label>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Selesai</label>
                   <input
                     type="time"
                     value={overrideData.endTime}
                     onChange={(e) => setOverrideData({ ...overrideData, endTime: e.target.value })}
-                    className="mt-1 w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs"
+                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Alasan / Catatan</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Alasan / Catatan</label>
                 <input
                   type="text"
                   value={overrideData.reason}
                   onChange={(e) => setOverrideData({ ...overrideData, reason: e.target.value })}
-                  className="mt-1 w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition"
+                className="w-full py-2.5 text-xs font-medium bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 rounded-xl transition"
               >
-                Lepaskan Slot Ruangan
+                Lepaskan Slot Ruangan Ini
               </button>
             </form>
           </div>
 
           {/* Form Sewa Proyektor */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Tv className="w-5 h-5 text-indigo-600" />
-                Peminjaman Unit Proyektor (Unit 01-11)
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Wajib memiliki reservasi aktif berstatus PUBLISHED.</p>
+          <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-4">
+            <div className="border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+                <h3 className="text-base font-semibold text-white tracking-tight">
+                  Peminjaman Unit Proyektor (Unit 01 - 11)
+                </h3>
+              </div>
+              <p className="text-xs text-zinc-400 mt-1">Wajib terikat pada reservasi berstatus PUBLISHED.</p>
             </div>
 
             <form onSubmit={handleBorrowProjector} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Nomor Reservasi Praktikum Aktif</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Reservasi Praktikum Terbit</label>
                 <select
                   value={selectedLoan.reservationId}
                   onChange={(e) => setSelectedLoan({ ...selectedLoan, reservationId: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 >
                   <option value="">-- Pilih Reservasi Terbit --</option>
                   {reservations.filter(r => r.status === 'PUBLISHED').map(r => (
@@ -370,11 +379,11 @@ export default function PJDashboard({ currentUser }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">Pilih Unit Proyektor Tersedia</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Pilih Unit Proyektor Tersedia</label>
                 <select
                   value={selectedLoan.projectorCode}
                   onChange={(e) => setSelectedLoan({ ...selectedLoan, projectorCode: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-md text-xs"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 >
                   {projectors.filter(p => p.status === 'AVAILABLE').map(p => (
                     <option key={p.code} value={p.code}>Unit {p.code} ({p.brand})</option>
@@ -384,7 +393,7 @@ export default function PJDashboard({ currentUser }) {
 
               <button
                 type="submit"
-                className="w-full py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                className="w-full py-2.5 text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-zinc-950 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.25)] transition"
               >
                 Pinjam Unit Proyektor
               </button>
@@ -394,34 +403,34 @@ export default function PJDashboard({ currentUser }) {
       </div>
 
       {/* Tabel Daftar Reservasi PJ */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <h3 className="text-base font-bold text-slate-900">Daftar Reservasi Anda</h3>
+      <div className="glass-panel rounded-3xl border border-white/10 p-6 sm:p-7 shadow-xl space-y-4">
+        <h3 className="text-base font-semibold text-white tracking-tight">Daftar Reservasi Anda</h3>
         {reservations.length === 0 ? (
-          <p className="text-xs text-slate-500">Belum ada reservasi dibuat.</p>
+          <p className="text-xs text-zinc-500">Belum ada reservasi dibuat.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+            <table className="w-full text-left text-xs text-zinc-300">
+              <thead className="bg-zinc-900/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-white/10">
                 <tr>
-                  <th className="px-4 py-2.5">Ruang</th>
-                  <th className="px-4 py-2.5">Tanggal</th>
-                  <th className="px-4 py-2.5">Waktu</th>
-                  <th className="px-4 py-2.5">Mata Kuliah / Modul</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5 text-right">Aksi</th>
+                  <th className="px-4 py-3">Ruang</th>
+                  <th className="px-4 py-3">Tanggal</th>
+                  <th className="px-4 py-3">Waktu</th>
+                  <th className="px-4 py-3">Mata Kuliah / Modul</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-white/5">
                 {reservations.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-bold text-slate-900">{item.roomCode}</td>
-                    <td className="px-4 py-3">{item.date}</td>
-                    <td className="px-4 py-3 font-mono">{item.startTime} - {item.endTime}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800">{item.title}</td>
+                  <tr key={item.id} className="hover:bg-white/[0.03] transition-colors">
+                    <td className="px-4 py-3 font-semibold text-white">{item.roomCode}</td>
+                    <td className="px-4 py-3 text-zinc-400 font-mono">{item.date}</td>
+                    <td className="px-4 py-3 font-mono text-zinc-300">{item.startTime} - {item.endTime}</td>
+                    <td className="px-4 py-3 font-medium text-zinc-200">{item.title}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full font-semibold text-[10px] ${
-                        item.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-800' :
-                        item.status === 'DRAFT' ? 'bg-slate-100 text-slate-700' : 'bg-rose-100 text-rose-800'
+                      <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] border ${
+                        item.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
+                        item.status === 'DRAFT' ? 'glass-pill text-zinc-300 border-white/10' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
                       }`}>
                         {item.status}
                       </span>
@@ -430,7 +439,7 @@ export default function PJDashboard({ currentUser }) {
                       {item.status === 'DRAFT' && (
                         <button
                           onClick={() => handlePublish(item.id)}
-                          className="px-2.5 py-1 bg-emerald-600 text-white rounded font-medium hover:bg-emerald-500 transition"
+                          className="px-3 py-1 bg-emerald-500 text-zinc-950 font-semibold rounded-lg hover:bg-emerald-400 transition"
                         >
                           Terbitkan
                         </button>
@@ -438,7 +447,7 @@ export default function PJDashboard({ currentUser }) {
                       {item.status !== 'CANCELLED' && (
                         <button
                           onClick={() => handleCancel(item.id)}
-                          className="px-2 py-1 text-rose-600 hover:bg-rose-50 rounded transition"
+                          className="px-3 py-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
                         >
                           Batal
                         </button>
