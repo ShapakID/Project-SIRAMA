@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import RoomTimetable from './components/RoomTimetable';
+import PJDashboard from './components/PJDashboard';
+import PetugasDashboard from './components/PetugasDashboard';
 import { Shield, Tv, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export default function App() {
@@ -113,21 +115,35 @@ export default function App() {
         )}
 
         {activeTab === 'pj' && (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center py-12">
-            <h3 className="text-lg font-bold text-slate-800">Panel PJ Kelas</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Selamat datang, {currentUser?.name}. Anda dapat membuat draft reservasi praktikum dan meminjam unit proyektor.
-            </p>
-          </div>
+          currentUser && currentUser.role === 'PJ' ? (
+            <PJDashboard currentUser={currentUser} />
+          ) : (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center py-12">
+              <p className="text-sm text-slate-600">Silakan login sebagai Penanggung Jawab (PJ) Kelas untuk mengakses panel ini.</p>
+              <button
+                onClick={() => setLoginModalOpen(true)}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold"
+              >
+                Login Sekarang
+              </button>
+            </div>
+          )
         )}
 
         {activeTab === 'petugas' && (
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center py-12">
-            <h3 className="text-lg font-bold text-slate-800">Panel Petugas GSG</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Akses khusus petugas untuk mengelola serah-terima proyektor, penanganan kerusakan fasilitas, dan impor jadwal Excel.
-            </p>
-          </div>
+          currentUser && currentUser.role === 'PETUGAS' ? (
+            <PetugasDashboard currentUser={currentUser} />
+          ) : (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center py-12">
+              <p className="text-sm text-slate-600">Silakan login sebagai Petugas GSG untuk mengakses panel kendali ini.</p>
+              <button
+                onClick={() => setLoginModalOpen(true)}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold"
+              >
+                Login Petugas
+              </button>
+            </div>
+          )
         )}
       </main>
 
