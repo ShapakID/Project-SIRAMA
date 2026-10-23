@@ -1,8 +1,11 @@
 # SIRAMA Project Specification (Reboot)
 
-## Working Directory
+## Working Directory & Deployment Hosts
 - Local development: `C:\Users\Acer\Documents\shapak\Project\Project`
-- Target remote laptop: `C:\Users\Administrator\Desktop\Project` (IP `192.168.100.10`)
+- Primary Deployment Target (Laptop Dev 2): `C:\Users\Administrator\Desktop\Project` (IP `192.168.100.10`, User: `Administrator`, SSH Key: `~/.ssh/id_ed25519`)
+  - Status koneksi: Terverifikasi aktif via Port 22 SSH.
+  - Runtime remote: Node.js `v22.21.0`, npm `11.6.2`, Git `2.51.1`.
+  - Strategi sinkronisasi: Deploy langsung via SSH/SCP/Rsync, migrasi database Prisma SQLite (`dev.db`), instalasi dependensi, dan startup layanan Express (:4000) & Vite (:3000).
 
 ## Project Context & Objectives
 Sistem peminjaman ruangan Gedung Serbaguna (GSG) Fakultas Teknik Universitas Tadulako dan peminjaman unit proyektor terintegrasi.
@@ -38,4 +41,21 @@ Fokus sistem: penguncian hak pakai ruangan secara anti-bentrok dan pelacakan uni
    - **Guest / Mahasiswa Umum**: Read-only. Melihat ketersediaan ruangan real-time dan posisi kelas.
    - **PJ Kelas / Komti**: Akun terdaftar di-seed perwakilan kelas (Shafairunizar Neirabista Ekazura - F5212510018, Moh. Daffa Setiawan - F5212520039). Mengelola reservasi praktikum (draft/publish), dan memperbarui status sesi kuliah kelasnya (online, lepas ruangan).
    - **Dosen**: Read-only. Memantau posisi ruangan kelas binaannya.
-   - **Petugas**: Default akun petugas (`petugas` / `petugas123`). Mengelola ketersediaan unit proyektor, mencatat serah-terima/pengembalian fisik, serta memantau dan memperbarui status laporan kerusakan.
+   - Petugas: Default akun petugas (`petugas` / `petugas123`). Mengelola ketersediaan unit proyektor, mencatat serah-terima/pengembalian fisik, serta memantau dan memperbarui status laporan kerusakan.
+
+   ## Deployment & Remote Operation Runbook
+   1. **Sync Source Code**:
+    - Transfer file project (tanpa `node_modules` dan `.git`) dari laptop lokal ke remote:
+      `scp -i ~/.ssh/id_ed25519 -r <files> Administrator@192.168.100.10:C:/Users/Administrator/Desktop/Project/` atau menggunakan bundel tarball.
+   2. **Backend Setup**:
+    - `cd C:\Users\Administrator\Desktop\Project\backend`
+    - `npm install`
+    - `npx prisma db push`
+    - `node prisma/seed.js`
+   3. **Frontend Setup & Build**:
+    - `cd C:\Users\Administrator\Desktop\Project\frontend`
+    - `npm install`
+    - `npm run build`
+   4. **Service Verification**:
+    - Jalankan backend test suite dan verifikasi ketersediaan endpoint API di `http://192.168.100.10:4000`.
+    - Jalankan frontend dev/preview di `http://192.168.100.10:3000`.
