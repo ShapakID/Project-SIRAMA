@@ -1,0 +1,69 @@
+const express = require('express');
+const path = require('path');
+const prisma = require('../db');
+const {
+  getRoomAvailability,
+  applyOverride,
+  importSchedulesFromExcel
+} = require('../services/availabilityService');
+
+const router = express.Router();
+
+// Get rooms
+router.get('/rooms', async (req, res) => {
+  try {
+    const rooms = await prisma.room.findMany({ where: { isActive: true } });
+    res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get room availability by date
+router.get('/availability', async (req, res) => {
+  try {
+    const { roomCode, date } = req.query;
+    if (!roomCode || !date) {
+      return res.status(400).json({ error: 'roomCode and date query params are required' });
+    }
+    const slots = await getRoomAvailability(roomCode, date);
+    res.json(slots);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create schedule override (PJ only)
+router.post('/override', async (req, res) => {
+  try {
+    const { roomCode, date, courseName, status, notes, updatedBy } = req.body;
+    if (!roomCode || !date || !status) {
+      return res.status(400).json({ error: 'roomCode, date, and status are required' });
+    }
+    const override = await applyOverride({
+      roomCode,
+      date,
+      courseName,
+      status,
+      notes,
+      updatedBy
+    });
+    res.json(override);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Import excel
+router.post('/import-excel', async (req, res) => {
+  try {
+    const defaultPath = path.resolve(__dirname, '../../../JADWAL KULIAH SEMESTER 3 2026 SI-A.xlsx');
+    const filePath = req.body.filePath || defaultPath;
+    const items = await importSchedulesFromExcel(filePath);
+    res.json({ message: 'Excel schedules imported successfully', count: items.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
