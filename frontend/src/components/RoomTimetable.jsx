@@ -49,6 +49,7 @@ export default function RoomTimetable({ onSelectSlot }) {
           </span>
         );
       case 'OCCUPIED_PRACTICUM':
+      case 'PRACTICUM':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300">
             <Clock className="w-3.5 h-3.5" /> Praktikum Terjadwal

@@ -5,7 +5,11 @@ const router = express.Router();
 
 router.post('/login', async (req, res) => {
   try {
-    const { nim, password } = req.body;
+    const nim = req.body.nim || req.body.identifier;
+    const { password } = req.body;
+    if (!nim) {
+      return res.status(400).json({ error: 'NIM or username is required' });
+    }
     const result = await loginUser(nim, password);
     res.json(result);
   } catch (err) {

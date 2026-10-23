@@ -13,6 +13,12 @@ function isOverlap(startA, endA, startB, endB) {
 async function saveDraft(data) {
   const { id, pjNim, pjName, roomCode, date, startTime, endTime, title } = data;
 
+  if (startTime && endTime && timeToMinutes(startTime) >= timeToMinutes(endTime)) {
+    const err = new Error('Invalid timeslot: startTime must be before endTime');
+    err.status = 400;
+    throw err;
+  }
+
   if (id) {
     return await prisma.practicumReservation.update({
       where: { id },
@@ -44,37 +50,45 @@ async function saveDraft(data) {
 }
 
 async function publishReservation(reservationId) {
-  const reservation = await prisma.practicumReservation.findUnique({
-    where: { id: reservationId }
-  });
+  return await prisma.$transaction(async (tx) => {
+    const reservation = await tx.practicumReservation.findUnique({
+      where: { id: reservationId }
+    });
 
-  if (!reservation) {
-    const err = new Error('Reservation not found');
-    err.status = 404;
-    throw err;
-  }
+    if (!reservation) {
+      const err = new Error('Reservation not found');
+      err.status = 404;
+      throw err;
+    }
 
-  // Check collision using availability engine
-  const slots = await getRoomAvailability(reservation.roomCode, reservation.date);
+    if (timeToMinutes(reservation.startTime) >= timeToMinutes(reservation.endTime)) {
+      const err = new Error('Invalid timeslot: startTime must be before endTime');
+      err.status = 400;
+      throw err;
+    }
 
-  for (const slot of slots) {
-    if (slot.status === 'OCCUPIED_CLASS' || (slot.status === 'PRACTICUM' && slot.id !== reservationId)) {
-      if (isOverlap(reservation.startTime, reservation.endTime, slot.startTime, slot.endTime)) {
-        const err = new Error(`Conflict: Room ${reservation.roomCode} is already occupied by ${slot.courseName || slot.title || 'another session'} at that time.`);
+    // Check collision using availability engine
+    const slots = await getRoomAvailability(reservation.roomCode, reservation.date);
+
+    for (const slot of slots) {
+      if (slot.status === 'OCCUPIED_CLASS' || (slot.status === 'PRACTICUM' && slot.id !== reservationId)) {
+        if (isOverlap(reservation.startTime, reservation.endTime, slot.startTime, slot.endTime)) {
+          const err = new Error(`Conflict: Room ${reservation.roomCode} is already occupied by ${slot.courseName || slot.title || 'another session'} at that time.`);
+          err.status = 409;
+          throw err;
+        }
+      }
+      if (slot.status === 'MAINTENANCE') {
+        const err = new Error(`Conflict: Room ${reservation.roomCode} is currently under maintenance.`);
         err.status = 409;
         throw err;
       }
     }
-    if (slot.status === 'MAINTENANCE') {
-      const err = new Error(`Conflict: Room ${reservation.roomCode} is currently under maintenance.`);
-      err.status = 409;
-      throw err;
-    }
-  }
 
-  return await prisma.practicumReservation.update({
-    where: { id: reservationId },
-    data: { status: 'PUBLISHED' }
+    return await tx.practicumReservation.update({
+      where: { id: reservationId },
+      data: { status: 'PUBLISHED' }
+    });
   });
 }
 

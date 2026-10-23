@@ -14,14 +14,14 @@ async function borrowProjector({ projectorCode, reservationId, borrowerName, bor
     throw err;
   }
 
-  // Verify reservation exists
+  // Verify reservation exists and is active/published
   const reservation = await prisma.practicumReservation.findUnique({
     where: { id: reservationId }
   });
 
-  if (!reservation) {
-    const err = new Error('Reservation not found');
-    err.status = 404;
+  if (!reservation || reservation.status !== 'PUBLISHED') {
+    const err = new Error('Borrowing a projector requires an active, published room reservation');
+    err.status = 400;
     throw err;
   }
 
@@ -62,7 +62,7 @@ async function borrowProjector({ projectorCode, reservationId, borrowerName, bor
   return loan;
 }
 
-async function returnProjector(loanId, conditionNotes) {
+async function returnProjector(loanId, conditionNotes, isDamaged = false) {
   const loan = await prisma.projectorLoan.findUnique({
     where: { id: loanId }
   });
@@ -70,6 +70,12 @@ async function returnProjector(loanId, conditionNotes) {
   if (!loan) {
     const err = new Error('Loan record not found');
     err.status = 404;
+    throw err;
+  }
+
+  if (loan.status === 'RETURNED') {
+    const err = new Error('Projector has already been returned');
+    err.status = 400;
     throw err;
   }
 
@@ -82,11 +88,11 @@ async function returnProjector(loanId, conditionNotes) {
     }
   });
 
-  // Check if damaged
-  const isDamaged = conditionNotes && conditionNotes.toLowerCase().includes('rusak');
+  // Check if damaged explicitly via boolean flag or explicit defect keyword
+  const markedBroken = isDamaged === true || (typeof isDamaged === 'string' && isDamaged === 'true');
   await prisma.projector.update({
     where: { code: loan.projectorCode },
-    data: { status: isDamaged ? 'BROKEN' : 'AVAILABLE' }
+    data: { status: markedBroken ? 'BROKEN' : 'AVAILABLE' }
   });
 
   return updatedLoan;

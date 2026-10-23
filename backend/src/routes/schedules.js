@@ -57,8 +57,8 @@ router.post('/override', async (req, res) => {
 // Import excel
 router.post('/import-excel', async (req, res) => {
   try {
-    const defaultPath = path.resolve(__dirname, '../../../JADWAL KULIAH SEMESTER 3 2026 SI-A.xlsx');
-    const filePath = req.body.filePath || defaultPath;
+    // Only allow imported file from server root for security
+    const filePath = path.resolve(__dirname, '../../../JADWAL KULIAH SEMESTER 3 2026 SI-A.xlsx');
     const items = await importSchedulesFromExcel(filePath);
     res.json({ message: 'Excel schedules imported successfully', count: items.length });
   } catch (err) {

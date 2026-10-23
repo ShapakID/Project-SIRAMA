@@ -13,7 +13,7 @@ async function loginUser(nim, password) {
     throw new Error('User not found');
   }
 
-  if (password && user.password && user.password !== password) {
+  if (!password || user.password !== password) {
     throw new Error('Invalid credentials');
   }
 

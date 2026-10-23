@@ -39,8 +39,8 @@ router.post('/borrow', async (req, res) => {
 
 router.post('/loans/:id/return', async (req, res) => {
   try {
-    const { conditionNotes } = req.body;
-    const loan = await returnProjector(req.params.id, conditionNotes);
+    const { conditionNotes, isDamaged } = req.body;
+    const loan = await returnProjector(req.params.id, conditionNotes, isDamaged);
     res.json(loan);
   } catch (err) {
     const status = err.status || 500;
