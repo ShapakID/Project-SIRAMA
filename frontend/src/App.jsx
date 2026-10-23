@@ -156,8 +156,8 @@ export default function App() {
 
       {/* Login Modal Once UI Glass Style */}
       {loginModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-md p-4">
-          <div className="glass-panel rounded-3xl max-w-sm w-full p-6 sm:p-7 border border-white/15 bg-zinc-900/80 backdrop-blur-2xl text-zinc-100 shadow-2xl shadow-black/80">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="glass-modal rounded-3xl max-w-sm w-full p-6 sm:p-7 text-zinc-100">
             <h3 className="text-lg font-semibold text-white tracking-tight">Login Sistem SIRAMA</h3>
             <p className="text-xs text-zinc-400 mt-1">Gunakan NIM (PJ Kelas) atau Username (Petugas GSG)</p>
 
@@ -176,7 +176,7 @@ export default function App() {
                   placeholder="Contoh: F5212510018 atau petugas"
                   value={loginIdentifier}
                   onChange={(e) => setLoginIdentifier(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-zinc-950/70 border border-white/15 rounded-xl text-sm text-white placeholder-zinc-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 focus:outline-none transition"
+                  className="w-full px-3.5 py-2.5 glass-input rounded-xl text-sm focus:outline-none"
                 />
               </div>
 
@@ -188,7 +188,7 @@ export default function App() {
                   placeholder="Password akun"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-zinc-950/70 border border-white/15 rounded-xl text-sm text-white placeholder-zinc-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 focus:outline-none transition"
+                  className="w-full px-3.5 py-2.5 glass-input rounded-xl text-sm focus:outline-none"
                 />
               </div>
 
@@ -196,13 +196,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setLoginModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/10 rounded-xl transition"
+                  className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-semibold bg-white text-zinc-950 hover:bg-zinc-200 rounded-xl shadow-sm transition"
+                  className="px-5 py-2 text-xs font-semibold bg-white text-zinc-950 hover:bg-zinc-200 rounded-full shadow-sm transition"
                 >
                   Masuk
                 </button>
@@ -214,8 +214,8 @@ export default function App() {
 
       {/* Damage Report Modal Once UI Glass Style */}
       {reportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-md p-4">
-          <div className="glass-panel rounded-3xl max-w-md w-full p-6 sm:p-7 border border-white/15 bg-zinc-900/80 backdrop-blur-2xl text-zinc-100 shadow-2xl shadow-black/80">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="glass-modal rounded-3xl max-w-md w-full p-6 sm:p-7 text-zinc-100">
             <h3 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-rose-400" />
               Lapor Kerusakan Fasilitas GSG
@@ -235,11 +235,11 @@ export default function App() {
                     <select
                       value={reportData.targetType}
                       onChange={(e) => setReportData({ ...reportData, targetType: e.target.value })}
-                      className="w-full px-3 py-2 bg-zinc-950/70 border border-white/15 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 glass-input rounded-xl text-xs focus:outline-none"
                     >
-                      <option value="ROOM">Ruangan GSG</option>
-                      <option value="PROJECTOR">Unit Proyektor</option>
-                      <option value="GENERAL_FACILITY">Fasilitas Umum</option>
+                      <option value="ROOM" className="bg-zinc-900 text-white">Ruangan GSG</option>
+                      <option value="PROJECTOR" className="bg-zinc-900 text-white">Unit Proyektor</option>
+                      <option value="GENERAL_FACILITY" className="bg-zinc-900 text-white">Fasilitas Umum</option>
                     </select>
                   </div>
 
@@ -251,7 +251,7 @@ export default function App() {
                       placeholder="SG-7 / Unit 02"
                       value={reportData.targetCode}
                       onChange={(e) => setReportData({ ...reportData, targetCode: e.target.value })}
-                      className="w-full px-3 py-2 bg-zinc-950/70 border border-white/15 rounded-xl text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 glass-input rounded-xl text-xs focus:outline-none"
                     />
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export default function App() {
                     placeholder="Nama Anda atau Anonim"
                     value={reportData.reporterName}
                     onChange={(e) => setReportData({ ...reportData, reporterName: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950/70 border border-white/15 rounded-xl text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-cyan-400"
+                    className="w-full px-3 py-2 glass-input rounded-xl text-xs focus:outline-none"
                   />
                 </div>
 
@@ -275,7 +275,7 @@ export default function App() {
                     placeholder="Jelaskan kendala: misal lampu redup, kabel HDMI putus, AC tidak dingin..."
                     value={reportData.description}
                     onChange={(e) => setReportData({ ...reportData, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950/70 border border-white/15 rounded-xl text-xs text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-cyan-400"
+                    className="w-full px-3 py-2 glass-input rounded-xl text-xs focus:outline-none"
                   ></textarea>
                 </div>
 
@@ -283,13 +283,13 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setReportModalOpen(false)}
-                    className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/10 rounded-xl transition"
+                    className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition"
                   >
                     Tutup
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 text-xs font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl shadow-sm transition"
+                    className="px-5 py-2 text-xs font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-sm transition"
                   >
                     Kirim Laporan
                   </button>

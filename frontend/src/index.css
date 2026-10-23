@@ -40,3 +40,28 @@
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+.glass-modal {
+  background: rgba(18, 18, 22, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f4f4f5;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.3), 0 0 12px rgba(6, 182, 212, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.glass-input::placeholder {
+  color: #a1a1aa;
+}
