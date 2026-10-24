@@ -64,7 +64,10 @@ async function getClassSchedules(className, referenceDate) {
   const datesArray = Object.values(weekDates);
   const overrides = await prisma.scheduleOverride.findMany({
     where: {
-      date: { in: datesArray }
+      OR: [
+        { date: { in: datesArray } },
+        { newDate: { in: datesArray } }
+      ]
     }
   });
 
@@ -73,7 +76,10 @@ async function getClassSchedules(className, referenceDate) {
     const dateForDay = weekDates[dayName];
     const dayClasses = schedules.filter(s => s.dayOfWeek === dayName);
 
-    const formattedClasses = dayClasses.map(c => {
+    const formattedClasses = [];
+
+    // 1. Regular weekly classes for this day
+    for (const c of dayClasses) {
       const override = overrides.find(o => o.date === dateForDay && o.courseName === c.courseName);
 
       let status = 'NORMAL';
@@ -89,11 +95,25 @@ async function getClassSchedules(className, referenceDate) {
         } else if (override.status === 'MOVED_TIME') {
           effectiveStartTime = override.newStartTime || c.startTime;
           effectiveEndTime = override.newEndTime || c.endTime;
+        } else if (override.status === 'RESCHEDULED') {
+          if (override.newDate && override.newDate !== dateForDay) {
+            status = 'RESCHEDULED_OUT';
+            effectiveRoomCode = c.roomCode;
+            effectiveStartTime = c.startTime;
+            effectiveEndTime = c.endTime;
+            notes = override.notes || `Pindah jadwal ke ${override.newDate} (${override.newStartTime || c.startTime}-${override.newEndTime || c.endTime}) di ${override.newRoomCode || c.roomCode}`;
+          } else {
+            status = 'RESCHEDULED';
+            effectiveStartTime = override.newStartTime || c.startTime;
+            effectiveEndTime = override.newEndTime || c.endTime;
+            effectiveRoomCode = override.newRoomCode || c.roomCode;
+            notes = override.notes;
+          }
         }
-        notes = override.notes;
+        if (!notes) notes = override.notes;
       }
 
-      return {
+      formattedClasses.push({
         id: c.id,
         courseName: c.courseName,
         dayOfWeek: c.dayOfWeek,
@@ -109,9 +129,45 @@ async function getClassSchedules(className, referenceDate) {
         status,
         notes,
         isOverridden: !!override,
-        overrideId: override ? override.id : null
-      };
-    });
+        overrideId: override ? override.id : null,
+        targetDate: override?.newDate || null
+      });
+    }
+
+    // 2. Classes rescheduled INTO this day from another day
+    const incomingRescheduled = overrides.filter(o =>
+      o.status === 'RESCHEDULED' &&
+      o.newDate === dateForDay &&
+      o.date !== dateForDay &&
+      o.courseName &&
+      o.courseName.includes(className)
+    );
+
+    for (const inc of incomingRescheduled) {
+      const orig = schedules.find(s => s.courseName === inc.courseName) || {};
+      formattedClasses.push({
+        id: inc.id,
+        courseName: inc.courseName,
+        dayOfWeek: dayName,
+        date: dateForDay,
+        sks: orig.sks || 3,
+        lecturer: orig.lecturer || 'Dosen Pengampu',
+        originalRoomCode: inc.roomCode,
+        effectiveRoomCode: inc.newRoomCode || inc.roomCode,
+        originalStartTime: orig.startTime || '07:30',
+        originalEndTime: orig.endTime || '10:00',
+        effectiveStartTime: inc.newStartTime || orig.startTime || '07:30',
+        effectiveEndTime: inc.newEndTime || orig.endTime || '10:00',
+        status: 'RESCHEDULED_IN',
+        notes: inc.notes || `Jadwal pengganti dari hari ${getDayOfWeek(inc.date)} (${inc.date})`,
+        isOverridden: true,
+        overrideId: inc.id,
+        sourceDate: inc.date
+      });
+    }
+
+    // Sort by effectiveStartTime
+    formattedClasses.sort((a, b) => (a.effectiveStartTime || '').localeCompare(b.effectiveStartTime || ''));
 
     return {
       dayOfWeek: dayName,
@@ -128,7 +184,7 @@ async function getClassSchedules(className, referenceDate) {
   };
 }
 
-async function applyClassOverride({ courseName, roomCode, date, action, newRoomCode, newStartTime, newEndTime, notes, updatedBy }) {
+async function applyClassOverride({ courseName, roomCode, date, action, newDate, newRoomCode, newStartTime, newEndTime, notes, updatedBy }) {
   if (action === 'RESET') {
     await prisma.scheduleOverride.deleteMany({
       where: {
@@ -139,19 +195,25 @@ async function applyClassOverride({ courseName, roomCode, date, action, newRoomC
     return { success: true, action: 'RESET', courseName, date };
   }
 
-  if (action === 'MOVE_ROOM') {
-    if (!newRoomCode) {
-      throw new Error('Ruangan tujuan (newRoomCode) wajib ditentukan');
+  const targetDate = newDate || date;
+  const targetRoom = newRoomCode || roomCode;
+
+  if (action === 'MOVE_ROOM' || action === 'RESCHEDULE' || action === 'MOVE_TIME') {
+    const targetRoomCode = action === 'MOVE_ROOM' ? newRoomCode : (newRoomCode || roomCode);
+    if (!targetRoomCode) {
+      throw new Error('Ruangan tujuan wajib ditentukan');
     }
-    const availability = await getRoomAvailability(newRoomCode, date);
     const start = newStartTime || '07:30';
     const end = newEndTime || '17:30';
+
+    const availability = await getRoomAvailability(targetRoomCode, targetDate);
     const hasConflict = availability.some(slot => {
       if (slot.status === 'AVAILABLE') return false;
+      if (targetRoomCode === roomCode && targetDate === date && slot.courseName === courseName) return false;
       return (start < slot.endTime && end > slot.startTime);
     });
     if (hasConflict) {
-      throw new Error(`Ruangan ${newRoomCode} sedang terpakai pada jam ${start}-${end}.`);
+      throw new Error(`Ruangan ${targetRoomCode} sedang terpakai pada ${targetDate} jam ${start}-${end}.`);
     }
   }
 
@@ -162,7 +224,9 @@ async function applyClassOverride({ courseName, roomCode, date, action, newRoomC
     }
   });
 
-  const status = action === 'MOVE_ROOM' ? 'MOVED_ROOM' : (action === 'MOVE_TIME' ? 'MOVED_TIME' : action);
+  const status = action === 'MOVE_ROOM' ? 'MOVED_ROOM' :
+                 action === 'MOVE_TIME' ? 'MOVED_TIME' :
+                 action === 'RESCHEDULE' ? 'RESCHEDULED' : action;
 
   const override = await prisma.scheduleOverride.create({
     data: {
@@ -170,12 +234,14 @@ async function applyClassOverride({ courseName, roomCode, date, action, newRoomC
       roomCode,
       courseName,
       status,
-      newRoomCode: action === 'MOVE_ROOM' ? newRoomCode : null,
-      newStartTime: (action === 'MOVE_TIME' || action === 'MOVE_ROOM') ? newStartTime : null,
-      newEndTime: (action === 'MOVE_TIME' || action === 'MOVE_ROOM') ? newEndTime : null,
+      newDate: (action === 'RESCHEDULE' && newDate && newDate !== date) ? newDate : (newDate || null),
+      newRoomCode: (action === 'MOVE_ROOM' || action === 'RESCHEDULE') ? (newRoomCode || null) : null,
+      newStartTime: (action === 'MOVE_TIME' || action === 'MOVE_ROOM' || action === 'RESCHEDULE') ? newStartTime : null,
+      newEndTime: (action === 'MOVE_TIME' || action === 'MOVE_ROOM' || action === 'RESCHEDULE') ? newEndTime : null,
       notes: notes || (
         action === 'ONLINE' ? 'KBM Daring / Online' :
         action === 'MOVE_ROOM' ? `Pindah ke ruang ${newRoomCode}` :
+        action === 'RESCHEDULE' ? `Ganti jadwal ke ${targetDate} jam ${newStartTime}-${newEndTime}` :
         action === 'MOVE_TIME' ? `Geser jam ke ${newStartTime}-${newEndTime}` : null
       ),
       updatedBy: updatedBy || null
@@ -207,9 +273,25 @@ async function getRoomAvailability(roomCode, dateStr) {
   // 2b. Get target incoming overrides (classes moved INTO this room on dateStr)
   const incomingOverrides = await prisma.scheduleOverride.findMany({
     where: {
-      newRoomCode: roomCode,
-      date: dateStr,
-      status: 'MOVED_ROOM'
+      OR: [
+        {
+          newRoomCode: roomCode,
+          date: dateStr,
+          newDate: null,
+          status: { in: ['MOVED_ROOM', 'RESCHEDULED', 'MOVED_TIME'] }
+        },
+        {
+          newRoomCode: roomCode,
+          newDate: dateStr,
+          status: { in: ['MOVED_ROOM', 'RESCHEDULED', 'MOVED_TIME'] }
+        },
+        {
+          roomCode: roomCode,
+          newDate: dateStr,
+          newRoomCode: null,
+          status: 'RESCHEDULED'
+        }
+      ]
     }
   });
 
@@ -249,6 +331,30 @@ async function getRoomAvailability(roomCode, dateStr) {
           originalStatus: override.status,
           notes: override.notes || (override.status === 'ONLINE' ? 'KBM Online / Daring' : `Dipindahkan ke ${override.newRoomCode || 'ruang lain'}`)
         });
+      } else if (override.status === 'RESCHEDULED') {
+        if ((override.newDate && override.newDate !== dateStr) || (override.newRoomCode && override.newRoomCode !== roomCode)) {
+          slots.push({
+            type: 'CLASS',
+            courseName: c.courseName,
+            lecturer: c.lecturer,
+            startTime: c.startTime,
+            endTime: c.endTime,
+            status: 'AVAILABLE',
+            originalStatus: 'RESCHEDULED',
+            notes: override.notes || 'Jadwal dialihkan ke hari/ruangan lain'
+          });
+        } else {
+          slots.push({
+            type: 'CLASS',
+            courseName: c.courseName,
+            lecturer: c.lecturer,
+            startTime: override.newStartTime || c.startTime,
+            endTime: override.newEndTime || c.endTime,
+            status: 'OCCUPIED_CLASS',
+            originalStatus: 'RESCHEDULED',
+            notes: override.notes
+          });
+        }
       } else {
         slots.push({
           type: 'CLASS',

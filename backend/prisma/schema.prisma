@@ -47,7 +47,8 @@ model ScheduleOverride {
   date        String   // "YYYY-MM-DD"
   roomCode    String
   courseName  String?
-  status      String   // "ONLINE", "RELEASED", "RESCHEDULED"
+  status      String   // "ONLINE", "RELEASED", "RESCHEDULED", "MOVED_ROOM", "MOVED_TIME"
+  newDate     String?  // "YYYY-MM-DD" jika pindah hari
   newStartTime String?
   newEndTime   String?
   newRoomCode  String?

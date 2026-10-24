@@ -63,8 +63,9 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
   // Action Modal State
   const [actionModal, setActionModal] = useState({
     isOpen: false,
-    action: null, // 'ONLINE' | 'MOVE_ROOM' | 'MOVE_TIME' | 'RESET'
+    action: null, // 'ONLINE' | 'MOVE_ROOM' | 'RESCHEDULE' | 'RESET'
     course: null,
+    newDate: '',
     newRoomCode: '',
     newStartTime: '',
     newEndTime: '',
@@ -138,7 +139,8 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
       isOpen: true,
       action,
       course,
-      newRoomCode: course.effectiveRoomCode.startsWith('JTI') ? 'JTI-2' : 'SG-5',
+      newDate: course.date || selectedDate,
+      newRoomCode: course.effectiveRoomCode || 'SG-5',
       newStartTime: course.effectiveStartTime || '07:30',
       newEndTime: course.effectiveEndTime || '10:00',
       notes: '',
@@ -152,6 +154,7 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
       isOpen: false,
       action: null,
       course: null,
+      newDate: '',
       newRoomCode: '',
       newStartTime: '',
       newEndTime: '',
@@ -173,9 +176,10 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
         roomCode: actionModal.course.originalRoomCode,
         date: actionModal.course.date,
         action: actionModal.action,
-        newRoomCode: actionModal.action === 'MOVE_ROOM' ? actionModal.newRoomCode : null,
-        newStartTime: (actionModal.action === 'MOVE_TIME' || actionModal.action === 'MOVE_ROOM') ? actionModal.newStartTime : null,
-        newEndTime: (actionModal.action === 'MOVE_TIME' || actionModal.action === 'MOVE_ROOM') ? actionModal.newEndTime : null,
+        newDate: actionModal.action === 'RESCHEDULE' ? actionModal.newDate : null,
+        newRoomCode: (actionModal.action === 'MOVE_ROOM' || actionModal.action === 'RESCHEDULE') ? actionModal.newRoomCode : null,
+        newStartTime: (actionModal.action === 'RESCHEDULE' || actionModal.action === 'MOVE_ROOM') ? actionModal.newStartTime : null,
+        newEndTime: (actionModal.action === 'RESCHEDULE' || actionModal.action === 'MOVE_ROOM') ? actionModal.newEndTime : null,
         notes: actionModal.notes,
         updatedBy: currentUser?.nim || currentUser?.username || 'PJ'
       };
@@ -204,177 +208,140 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
     }
 
     try {
-      const payload = {
-        courseName: course.courseName,
-        roomCode: course.originalRoomCode,
-        date: course.date,
-        action: 'RESET',
-        updatedBy: currentUser?.nim || currentUser?.username || 'PJ'
-      };
-
       const res = await fetch('/api/schedules/class-override', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          courseName: course.courseName,
+          date: course.sourceDate || course.date,
+          action: 'RESET'
+        })
       });
-
       if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Gagal mereset jadwal');
+        const data = await res.json();
+        throw new Error(data.error || 'Gagal mereset jadwal');
       }
-
       fetchClassSchedule();
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert(err.message);
     }
   };
 
-  const cleanCourseTitle = (raw) => {
-    if (!raw) return 'Mata Kuliah';
-    return raw.replace(/\s*\([^)]*\)\s*$/, '').trim();
+  const cleanCourseTitle = (rawName) => {
+    if (!rawName) return 'Kegiatan Perkuliahan';
+    return rawName.replace(/\s*\(SI-[A-Z]\s*\d{4}\)$/i, '').trim();
   };
-
-  const isWeekendSelected = isWeekend(selectedDate);
 
   return (
     <div className="space-y-6">
-      {/* Weekend Notice Banner */}
-      {isWeekendSelected && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3 text-amber-300">
-          <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
-          <div className="text-sm">
-            <span className="font-semibold">Gedung SG & JTI Tutup (Akhir Pekan):</span> Perkuliahan reguler dan reservasi ruangan hanya beroperasi pada hari kerja (Senin - Jumat). Silakan pilih tanggal hari kerja.
-          </div>
+      {/* View Switcher Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl bg-zinc-900/60 border border-white/5 backdrop-blur-md">
+        <div className="flex items-center gap-2 p-1 bg-zinc-800/80 rounded-2xl border border-white/5">
+          <button
+            type="button"
+            onClick={() => setActiveView('CLASS')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeView === 'CLASS'
+                ? 'bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/20'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            Jadwal Kelas (Senin–Jumat)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('ROOM')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeView === 'ROOM'
+                ? 'bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/20'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Building className="w-4 h-4" />
+            Pantau per Ruangan
+          </button>
         </div>
-      )}
 
-      {/* Main Glass Panel */}
-      <div className="glass-panel rounded-3xl border border-white/10 overflow-hidden shadow-2xl shadow-black/50">
-        {/* Navigation & Controls Header */}
-        <div className="p-5 sm:p-7 border-b border-white/10 bg-zinc-900/60">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></span>
-                <h2 className="text-xl font-bold text-white tracking-tight">
-                  Jadwal Kuliah & Detektor Ruangan SG & JTI
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                Jadwal KBM per rombel kelas (Senin s.d. Jumat). PJ kelas dapat melepas ruangan (KBM daring), memindahkan ruangan, atau menggeser jam KBM.
-              </p>
+        {/* Dynamic Controls based on view */}
+        <div className="flex flex-wrap items-center gap-3">
+          {activeView === 'CLASS' ? (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-zinc-400 font-medium">Pilih Kelas:</label>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                disabled={currentUser?.role === 'PJ' && !!userClass}
+                className="bg-zinc-800 border border-white/10 text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400 disabled:opacity-80"
+              >
+                {classList.map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
             </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-zinc-400 font-medium">Pilih Ruangan:</label>
+              <select
+                value={selectedRoom}
+                onChange={(e) => setSelectedRoom(e.target.value)}
+                className="bg-zinc-800 border border-white/10 text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400"
+              >
+                <optgroup label="Gedung SG">
+                  {ALL_ROOMS.filter(r => r.startsWith('SG') || r.startsWith('Lab-Komputer')).map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Gedung JTI">
+                  {ALL_ROOMS.filter(r => r.startsWith('JTI') || r.startsWith('Lab-JTI')).map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+          )}
 
-            {/* View Switcher Pills */}
-            <div className="flex items-center bg-black/40 p-1 rounded-2xl border border-white/10 self-start lg:self-auto">
-              <button
-                type="button"
-                onClick={() => setActiveView('CLASS')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeView === 'CLASS'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Jadwal Kelas (Senin–Jumat)
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveView('ROOM')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeView === 'ROOM'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Pantau per Ruangan
-              </button>
-            </div>
+          {/* Date Picker */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-zinc-400 font-medium">Minggu/Tanggal:</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-zinc-800 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-400 font-mono"
+            />
           </div>
 
-          {/* Filter Toolbar */}
-          <div className="mt-6 flex flex-wrap items-center gap-3 pt-5 border-t border-white/5">
-            {/* Date Picker */}
-            <div className="flex items-center glass-pill rounded-2xl px-3.5 py-2 text-xs text-zinc-200 border border-white/10">
-              <Calendar className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
-              <span className="text-zinc-400 mr-2 hidden sm:inline">Minggu:</span>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-white text-xs focus:outline-none cursor-pointer"
-              />
-            </div>
+          <button
+            type="button"
+            onClick={activeView === 'CLASS' ? fetchClassSchedule : fetchRoomAvailability}
+            className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/5 transition-all"
+            title="Muat Ulang"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
-            {activeView === 'CLASS' ? (
-              /* Class Selector Dropdown */
-              <div className="flex items-center glass-pill rounded-2xl px-3.5 py-2 text-xs text-zinc-200 border border-white/10">
-                <BookOpen className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
-                <span className="text-zinc-400 mr-2">Kelas:</span>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  className="bg-zinc-900 text-white text-xs font-semibold focus:outline-none cursor-pointer rounded-lg px-2 py-0.5 border border-white/10"
-                >
-                  {classList.map(cls => (
-                    <option key={cls} value={cls} className="bg-zinc-900 text-white">
-                      {cls} {cls === userClass ? '(Kelas Saya)' : ''}
-                    </option>
-                  ))}
-                </select>
-                {selectedClass === userClass && (
-                  <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                    PJ Kelas
-                  </span>
-                )}
-              </div>
-            ) : (
-              /* Room Selector Dropdown */
-              <div className="flex items-center glass-pill rounded-2xl px-3.5 py-2 text-xs text-zinc-200 border border-white/10">
-                <Building className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
-                <span className="text-zinc-400 mr-2">Ruangan:</span>
-                <select
-                  value={selectedRoom}
-                  onChange={(e) => setSelectedRoom(e.target.value)}
-                  className="bg-zinc-900 text-white text-xs font-semibold focus:outline-none cursor-pointer rounded-lg px-2 py-0.5 border border-white/10"
-                >
-                  <optgroup label="Gedung SG">
-                    {ALL_ROOMS.filter(r => r.startsWith('SG') || r.startsWith('Lab-Komputer')).map(r => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Gedung JTI">
-                    {ALL_ROOMS.filter(r => r.startsWith('JTI') || r.startsWith('Lab-JTI')).map(r => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </optgroup>
-                </select>
+      {/* Main Container */}
+      <div className="glass-panel rounded-3xl border border-white/10 overflow-hidden shadow-xl">
+        {/* View Mode: Class Schedule (Monday-Friday) */}
+        {activeView === 'CLASS' && (
+          <div className="p-5 sm:p-7 space-y-6">
+            {isWeekend(selectedDate) && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Gedung Perkuliahan Tutup (Akhir Pekan) pada tanggal {selectedDate}. KBM reguler aktif Senin–Jumat.</span>
               </div>
             )}
 
-            {/* Refresh Button */}
-            <button
-              type="button"
-              onClick={activeView === 'CLASS' ? fetchClassSchedule : fetchRoomAvailability}
-              disabled={loadingClass || loadingRoom}
-              className="p-2 rounded-2xl glass-pill text-zinc-300 hover:text-white border border-white/10 hover:border-white/20 transition-all ml-auto"
-              title="Perbarui Jadwal"
-            >
-              <RefreshCw className={`w-4 h-4 ${(loadingClass || loadingRoom) ? 'animate-spin text-cyan-400' : ''}`} />
-            </button>
-          </div>
-        </div>
-
-        {/* View Mode: Class-Centric Schedule (Monday - Friday) */}
-        {activeView === 'CLASS' && (
-          <div className="p-5 sm:p-7 space-y-8">
-            {/* Banner for PJ vs Guest */}
+            {/* Header info bar */}
             {isPJOfSelectedClass ? (
-              <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-3 text-cyan-300 text-xs">
+              <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-3 text-cyan-300 text-xs">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0" />
                   <span>
-                    <strong>Mode Akses PJ Terverifikasi:</strong> Anda memiliki wewenang untuk mengatur KBM kelas <strong>{selectedClass}</strong> (melepas ruangan daring, memindahkan ruang, atau menggeser jam).
+                    <strong>Mode Akses PJ Terverifikasi:</strong> Anda memiliki wewenang untuk mengatur KBM kelas <strong>{selectedClass}</strong> (melepas ruangan daring, memindahkan ruang, atau mengganti jadwal hari/jam).
                   </span>
                 </div>
               </div>
@@ -382,7 +349,7 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
               <div className="p-3.5 rounded-2xl bg-zinc-800/50 border border-white/5 flex items-center gap-2 text-zinc-400 text-xs">
                 <AlertCircle className="w-4 h-4 text-zinc-500 shrink-0" />
                 <span>
-                  Menampilkan jadwal kelas <strong>{selectedClass}</strong>. Aksi perubahan ruangan dan jam hanya dapat dilakukan oleh PJ kelas bersangkutan atau Petugas.
+                  Menampilkan jadwal kelas <strong>{selectedClass}</strong>. Aksi perubahan ruangan dan jadwal hanya dapat dilakukan oleh PJ kelas bersangkutan atau Petugas.
                 </span>
               </div>
             )}
@@ -426,7 +393,9 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                         {dayGroup.courses.map((course) => {
                           const isOnline = course.status === 'ONLINE';
                           const isMovedRoom = course.status === 'MOVED_ROOM';
-                          const isMovedTime = course.status === 'MOVED_TIME';
+                          const isRescheduled = course.status === 'RESCHEDULED';
+                          const isRescheduledOut = course.status === 'RESCHEDULED_OUT';
+                          const isRescheduledIn = course.status === 'RESCHEDULED_IN';
 
                           return (
                             <div
@@ -436,8 +405,10 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                                   ? 'bg-blue-950/20 border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.1)]'
                                   : isMovedRoom
                                   ? 'bg-purple-950/20 border-purple-500/30'
-                                  : isMovedTime
+                                  : (isRescheduled || isRescheduledIn)
                                   ? 'bg-amber-950/20 border-amber-500/30'
+                                  : isRescheduledOut
+                                  ? 'bg-zinc-900/60 border-zinc-700/50 opacity-75'
                                   : 'bg-zinc-800/40 border-white/5 hover:border-white/15'
                               }`}
                             >
@@ -462,10 +433,20 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                                       <ArrowRightLeft className="w-3 h-3" />
                                       Pindah Ruang
                                     </span>
-                                  ) : isMovedTime ? (
+                                  ) : isRescheduledOut ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-700/40 text-zinc-300 border border-zinc-600/30">
+                                      <Calendar className="w-3 h-3" />
+                                      Pindah Hari
+                                    </span>
+                                  ) : isRescheduledIn ? (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                      <Clock className="w-3 h-3" />
-                                      Geser Jam
+                                      <Calendar className="w-3 h-3" />
+                                      Jadwal Pengganti
+                                    </span>
+                                  ) : isRescheduled ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                      <Calendar className="w-3 h-3" />
+                                      Ganti Jadwal
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
@@ -501,6 +482,10 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                                       <span>➔</span>
                                       <span className="text-white font-bold">{course.effectiveRoomCode}</span>
                                     </div>
+                                  ) : isRescheduledOut ? (
+                                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-400 border border-white/5">
+                                      Ruang {course.originalRoomCode} Dilepas
+                                    </span>
                                   ) : (
                                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-zinc-700/50 text-white border border-white/10">
                                       {course.effectiveRoomCode}
@@ -518,7 +503,7 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                               {/* PJ Action Buttons (Only for PJ of this class or Petugas) */}
                               {isPJOfSelectedClass && (
                                 <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center gap-2">
-                                  {!isOnline && (
+                                  {!isOnline && !isRescheduledOut && (
                                     <button
                                       type="button"
                                       onClick={() => openActionModal('ONLINE', course)}
@@ -530,25 +515,29 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                                     </button>
                                   )}
 
-                                  <button
-                                    type="button"
-                                    onClick={() => openActionModal('MOVE_ROOM', course)}
-                                    className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-all flex items-center gap-1.5"
-                                    title="Pindahkan KBM ke ruangan lain yang kosong"
-                                  >
-                                    <ArrowRightLeft className="w-3.5 h-3.5" />
-                                    Pindah Ruang
-                                  </button>
+                                  {!isRescheduledOut && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openActionModal('MOVE_ROOM', course)}
+                                      className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-all flex items-center gap-1.5"
+                                      title="Pindahkan KBM ke ruangan lain yang kosong"
+                                    >
+                                      <ArrowRightLeft className="w-3.5 h-3.5" />
+                                      Pindah Ruang
+                                    </button>
+                                  )}
 
-                                  <button
-                                    type="button"
-                                    onClick={() => openActionModal('MOVE_TIME', course)}
-                                    className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all flex items-center gap-1.5"
-                                    title="Geser jam mulai atau selesai"
-                                  >
-                                    <Clock className="w-3.5 h-3.5" />
-                                    Geser Jam
-                                  </button>
+                                  {!isRescheduledOut && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openActionModal('RESCHEDULE', course)}
+                                      className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all flex items-center gap-1.5"
+                                      title="Ganti jadwal (pindah hari, jam, atau ruangan)"
+                                    >
+                                      <Calendar className="w-3.5 h-3.5" />
+                                      Ganti Jadwal
+                                    </button>
+                                  )}
 
                                   {course.isOverridden && (
                                     <button
@@ -658,17 +647,17 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
         )}
       </div>
 
-      {/* PJ Action Modal (Online / Move Room / Move Time) */}
+      {/* PJ Action Modal (Online / Move Room / Reschedule) */}
       {actionModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="glass-panel w-full max-w-lg rounded-3xl border border-white/20 p-6 sm:p-7 shadow-2xl relative bg-zinc-900/95 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               {actionModal.action === 'ONLINE' && <Globe className="w-5 h-5 text-cyan-400" />}
               {actionModal.action === 'MOVE_ROOM' && <ArrowRightLeft className="w-5 h-5 text-purple-400" />}
-              {actionModal.action === 'MOVE_TIME' && <Clock className="w-5 h-5 text-amber-400" />}
+              {actionModal.action === 'RESCHEDULE' && <Calendar className="w-5 h-5 text-amber-400" />}
               {actionModal.action === 'ONLINE' ? 'Konfirmasi KBM Online / Daring' :
                actionModal.action === 'MOVE_ROOM' ? 'Pindahkan Ruangan KBM' :
-               'Geser Jam Kuliah'}
+               'Ganti Jadwal Perkuliahan'}
             </h3>
 
             <p className="text-xs text-zinc-400 mt-1">
@@ -720,31 +709,77 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                 </div>
               )}
 
-              {(actionModal.action === 'MOVE_TIME' || actionModal.action === 'MOVE_ROOM') && (
-                <div className="grid grid-cols-2 gap-3">
+              {actionModal.action === 'RESCHEDULE' && (
+                <div className="space-y-3">
+                  {/* Select Day/Date */}
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                      Jam Mulai:
+                      Pilih Hari & Tanggal Pelaksanaan:
                     </label>
-                    <input
-                      type="time"
-                      value={actionModal.newStartTime}
-                      onChange={(e) => setActionModal(prev => ({ ...prev, newStartTime: e.target.value }))}
-                      className="w-full bg-zinc-800 text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"
+                    <select
+                      value={actionModal.newDate}
+                      onChange={(e) => setActionModal(prev => ({ ...prev, newDate: e.target.value }))}
+                      className="w-full bg-zinc-800 text-white text-xs font-semibold rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"
                       required
-                    />
+                    >
+                      {classSchedule?.weekDates && Object.entries(classSchedule.weekDates).map(([dayName, dStr]) => (
+                        <option key={dStr} value={dStr}>
+                          {dayName} ({dStr}) {dStr === actionModal.course?.date ? '— Hari Asal' : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+
+                  {/* Select Room */}
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                      Jam Selesai:
+                      Ruangan:
                     </label>
-                    <input
-                      type="time"
-                      value={actionModal.newEndTime}
-                      onChange={(e) => setActionModal(prev => ({ ...prev, newEndTime: e.target.value }))}
-                      className="w-full bg-zinc-800 text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"
+                    <select
+                      value={actionModal.newRoomCode}
+                      onChange={(e) => setActionModal(prev => ({ ...prev, newRoomCode: e.target.value }))}
+                      className="w-full bg-zinc-800 text-white text-xs font-semibold rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"
                       required
-                    />
+                    >
+                      <optgroup label="Gedung SG (Lantai 1 & 2)">
+                        {ALL_ROOMS.filter(r => r.startsWith('SG') || r.startsWith('Lab-Komputer')).map(r => (
+                          <option key={r} value={r}>{r} {r === actionModal.course?.originalRoomCode ? '(Ruang Semula)' : ''}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Gedung JTI (Lantai 1 & 2)">
+                        {ALL_ROOMS.filter(r => r.startsWith('JTI') || r.startsWith('Lab-JTI')).map(r => (
+                          <option key={r} value={r}>{r} {r === actionModal.course?.originalRoomCode ? '(Ruang Semula)' : ''}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  {/* Hours */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                        Jam Mulai:
+                      </label>
+                      <input
+                        type="time"
+                        value={actionModal.newStartTime}
+                        onChange={(e) => setActionModal(prev => ({ ...prev, newStartTime: e.target.value }))}
+                        className="w-full bg-zinc-800 text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                        Jam Selesai:
+                      </label>
+                      <input
+                        type="time"
+                        value={actionModal.newEndTime}
+                        onChange={(e) => setActionModal(prev => ({ ...prev, newEndTime: e.target.value }))}
+                        className="w-full bg-zinc-800 text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -755,7 +790,7 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: Dosen berhalangan tatap muka / Pindah ruang karena AC perbaikan"
+                  placeholder="Contoh: Dosen berhalangan tatap muka / Pindah jadwal atas kesepakatan kelas"
                   value={actionModal.notes}
                   onChange={(e) => setActionModal(prev => ({ ...prev, notes: e.target.value }))}
                   className="w-full bg-zinc-800 text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-cyan-400"

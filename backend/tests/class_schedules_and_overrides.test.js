@@ -88,7 +88,46 @@ async function runTests() {
   assert.ok(sg5Moved, 'Target room SG-5 must contain the moved class slot');
   assert.strictEqual(sg5Moved.status, 'OCCUPIED_CLASS', 'Target room SG-5 must be OCCUPIED_CLASS');
 
-  // 4. Test PJ action: RESET (Kembali ke default SIGA)
+  // 4. Test PJ action: RESCHEDULE (Ganti Jadwal / Pindah Hari)
+  const jumatDate = '2026-10-30';
+  await applyClassOverride({
+    courseName: ksiCourse,
+    roomCode: ksiRoom,
+    date: testDate,
+    action: 'RESCHEDULE',
+    newDate: jumatDate,
+    newRoomCode: ksiRoom,
+    newStartTime: '14:00',
+    newEndTime: '16:30',
+    notes: 'Pindah hari ke Jumat sore',
+    updatedBy: 'F5212510018'
+  });
+
+  const afterReschedule = await getClassSchedules('SI-A 2025', testDate);
+  const seninResched = afterReschedule.scheduleByDays.find(d => d.dayOfWeek === 'SENIN');
+  const ksiOut = seninResched.courses.find(c => c.courseName === ksiCourse);
+  assert.strictEqual(ksiOut.status, 'RESCHEDULED_OUT', 'SENIN must show RESCHEDULED_OUT');
+
+  // Verify SG-7 on SENIN is now AVAILABLE
+  const sg7SlotsResched = await getRoomAvailability(ksiRoom, testDate);
+  const sg7KsiOut = sg7SlotsResched.find(s => s.courseName === ksiCourse);
+  assert.strictEqual(sg7KsiOut.status, 'AVAILABLE', 'SG-7 on original date must be AVAILABLE');
+
+  // Verify JUMAT now has the incoming rescheduled course
+  const jumatResched = afterReschedule.scheduleByDays.find(d => d.dayOfWeek === 'JUMAT');
+  const ksiIn = jumatResched.courses.find(c => c.courseName === ksiCourse);
+  assert.ok(ksiIn, 'JUMAT must contain incoming rescheduled course');
+  assert.strictEqual(ksiIn.status, 'RESCHEDULED_IN');
+  assert.strictEqual(ksiIn.effectiveStartTime, '14:00');
+  assert.strictEqual(ksiIn.effectiveEndTime, '16:30');
+
+  // Verify SG-7 on JUMAT is OCCUPIED by this class
+  const sg7JumatSlots = await getRoomAvailability(ksiRoom, jumatDate);
+  const sg7JumatOccupied = sg7JumatSlots.find(s => s.courseName === ksiCourse);
+  assert.ok(sg7JumatOccupied, 'SG-7 on target date must have the course');
+  assert.strictEqual(sg7JumatOccupied.status, 'OCCUPIED_CLASS');
+
+  // 5. Test PJ action: RESET (Kembali ke default SIGA)
   await applyClassOverride({
     courseName: ksiCourse,
     roomCode: ksiRoom,

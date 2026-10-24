@@ -135,7 +135,7 @@ router.get('/by-class', async (req, res) => {
   }
 });
 
-// PJ action: Online / Move Room / Move Time / Reset
+// PJ action: Online / Move Room / Reschedule (Change Date/Time) / Reset
 router.post('/class-override', async (req, res) => {
   try {
     const {
@@ -143,6 +143,7 @@ router.post('/class-override', async (req, res) => {
       roomCode,
       date,
       action,
+      newDate,
       newRoomCode,
       newStartTime,
       newEndTime,
@@ -159,6 +160,7 @@ router.post('/class-override', async (req, res) => {
       roomCode,
       date,
       action,
+      newDate,
       newRoomCode,
       newStartTime,
       newEndTime,

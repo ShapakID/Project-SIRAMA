@@ -18,7 +18,8 @@ assert(content.includes('by-class'), 'Must fetch class schedule from /api/schedu
 assert(content.includes('class-override'), 'Must have override mutator /api/schedules/class-override');
 assert(content.includes('ONLINE'), 'Must support ONLINE action');
 assert(content.includes('MOVE_ROOM'), 'Must support MOVE_ROOM action');
-assert(content.includes('MOVE_TIME'), 'Must support MOVE_TIME action');
+assert(content.includes('RESCHEDULE'), 'Must support RESCHEDULE action');
+assert(content.includes('Ganti Jadwal'), 'Must render Ganti Jadwal label');
 assert(content.includes('RESET'), 'Must support RESET action');
 assert(content.includes('isPJOfSelectedClass'), 'Must have PJ role check');
 assert(content.includes('Jadwal Kelas (Senin–Jumat)'), 'Must render class-centric tab');
