@@ -17,6 +17,7 @@ import {
 import { getWitaDateYMD, getWitaTimeHM, getNextWeekdayYMD, isWeekend, getDayOfWeek } from '../utils/timeUtils';
 
 export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTimetable }) {
+  const [selectedBuilding, setSelectedBuilding] = useState('GSG');
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [selectedDate, setSelectedDate] = useState(() => getNextWeekdayYMD());
   const [currentTimeWita, setCurrentTimeWita] = useState(() => getWitaTimeHM());
@@ -34,12 +35,12 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
 
   useEffect(() => {
     fetchFloorStatus();
-  }, [selectedDate]);
+  }, [selectedDate, selectedBuilding]);
 
   const fetchFloorStatus = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/schedules/floor-status?date=${selectedDate}`);
+      const res = await fetch(`/api/schedules/floor-status?date=${selectedDate}&building=${selectedBuilding}`);
       if (res.ok) {
         const data = await res.json();
         setRoomsData(data);
@@ -67,24 +68,31 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
   };
 
   // Layout definition per floor as strictly specified:
-  // Lantai 1:
-  // Kiri: SG 03, SG 02, SG 01
-  // Kanan: SG 06, SG 05, SG 04
-  // Bawah: Pintu Masuk
-  const floor1Layout = {
+  // GSG Lantai 1 & 2
+  const gsgFloor1Layout = {
     leftColumn: ['SG 03', 'SG 02', 'SG 01'],
     rightColumn: ['SG 06', 'SG 05', 'SG 04']
   };
 
-  // Lantai 2:
-  // Kiri: SG 09, SG 08, SG 07
-  // Kanan: Lab-Komputer, SG 11, SG 10
-  const floor2Layout = {
+  const gsgFloor2Layout = {
     leftColumn: ['SG 09', 'SG 08', 'SG 07'],
     rightColumn: ['Lab-Komputer', 'SG 11', 'SG 10']
   };
 
-  const currentLayout = selectedFloor === 1 ? floor1Layout : floor2Layout;
+  // JTI Lantai 1 & 2
+  const jtiFloor1Layout = {
+    leftColumn: ['JTI 1'],
+    rightColumn: ['Lab Komputer JTI']
+  };
+
+  const jtiFloor2Layout = {
+    leftColumn: ['JTI 2'],
+    rightColumn: ['JTI 3']
+  };
+
+  const currentLayout = selectedBuilding === 'GSG'
+    ? (selectedFloor === 1 ? gsgFloor1Layout : gsgFloor2Layout)
+    : (selectedFloor === 1 ? jtiFloor1Layout : jtiFloor2Layout);
 
   const renderStatusBadge = (status) => {
     switch (status) {
@@ -230,18 +238,44 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 mb-3">
               <Layers className="w-3.5 h-3.5" />
-              Visual Denah Arsitektural Gedung Serbaguna (GSG)
+              Visual Denah Arsitektural Gedung {selectedBuilding} (FT-UNTAD)
             </div>
             <h2 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
-              Denah Lantai GSG FT-UNTAD
+              Denah Lantai Gedung {selectedBuilding}
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl">
-              Tata letak spasial ruangan SG 01 hingga SG 12 (Lab Komputer). Pantau ketersediaan slot kelas & praktikum secara langsung per lantai.
+              {selectedBuilding === 'GSG'
+                ? 'Tata letak spasial ruangan SG 01 hingga SG 12 (Lab Komputer). Pantau ketersediaan slot kelas & praktikum secara langsung per lantai.'
+                : 'Tata letak spasial ruangan JTI 1, Lab Komputer JTI, JTI 2, dan JTI 3. Fasilitas perkuliahan Jurusan Teknologi Informasi.'}
             </p>
           </div>
 
-          {/* Controls: Date Picker, Floor Selector & Kosong Sekarang Toggle */}
+          {/* Controls: Building Switcher, Date Picker, Floor Selector & Kosong Sekarang Toggle */}
           <div className="flex flex-wrap items-center gap-3">
+            {/* Building Switcher Pills */}
+            <div className="inline-flex p-1 bg-zinc-900/80 rounded-2xl border border-white/10">
+              <button
+                onClick={() => setSelectedBuilding('GSG')}
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition cursor-pointer ${
+                  selectedBuilding === 'GSG'
+                    ? 'bg-cyan-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Gedung GSG
+              </button>
+              <button
+                onClick={() => setSelectedBuilding('JTI')}
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition cursor-pointer ${
+                  selectedBuilding === 'JTI'
+                    ? 'bg-cyan-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Gedung JTI
+              </button>
+            </div>
+
             {/* WITA Time indicator badge */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-cyan-500/20 bg-cyan-950/30 text-cyan-300 text-xs font-mono">
               <Clock className="w-3.5 h-3.5 text-cyan-400" />
@@ -409,7 +443,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
                   <DoorOpen className="w-5 h-5 text-emerald-400" />
                   <div>
                     <p className="text-xs font-semibold tracking-wide text-white uppercase font-mono">
-                      Pintu Masuk Utama GSG FT-UNTAD
+                      Pintu Masuk Utama Gedung {selectedBuilding} FT-UNTAD
                     </p>
                     <p className="text-[11px] text-zinc-400">Lobi Utama & Akses Masuk Mahasiswa / Dosen</p>
                   </div>

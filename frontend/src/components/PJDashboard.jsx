@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Tv, PlusCircle, CheckCircle, AlertCircle, RefreshCw, Send, Trash2, Tag, FileText, BookOpen } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Tv,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Trash2,
+  BookOpen,
+  Layers,
+  Building2,
+  AlertTriangle,
+  Info
+} from 'lucide-react';
 import { getWitaDateYMD, getNextWeekdayYMD, isWeekend, getDayOfWeek, parseNimMetadata } from '../utils/timeUtils';
 import { getCoursesByNim } from '../utils/curriculumData';
 
-const ROOM_OPTIONS = ['SG-1', 'SG-2', 'SG-3', 'SG-4', 'SG-5', 'SG-6', 'SG-7', 'SG-8', 'SG-9', 'SG-10', 'SG-11', 'Lab-Komputer'];
-
-export default function PJDashboard({ currentUser }) {
+export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloorPlan }) {
   const [reservations, setReservations] = useState([]);
   const [projectors, setProjectors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,39 +27,35 @@ export default function PJDashboard({ currentUser }) {
 
   const availableCourses = getCoursesByNim(currentUser?.nim);
   const [selectedCourse, setSelectedCourse] = useState(() => availableCourses[0]?.name || 'Rekayasa Perangkat Lunak');
-  const [moduleTopic, setModuleTopic] = useState('Modul 1: Pengantar & Persiapan');
 
-  // Form states
+  // Form states - category only PRAKTIKUM and LAINNYA
   const [formData, setFormData] = useState({
-    roomCode: 'SG-7',
+    roomCode: initialRoom || 'SG-7',
     date: getNextWeekdayYMD(),
     startTime: '10:00',
     endTime: '12:00',
     category: 'PRAKTIKUM',
-    title: `Praktikum ${availableCourses[0]?.name || 'Rekayasa Perangkat Lunak'} - Modul 1: Pengantar & Persiapan`,
+    title: `Praktikum ${availableCourses[0]?.name || 'Rekayasa Perangkat Lunak'}`,
     purpose: ''
   });
 
-  const [overrideData, setOverrideData] = useState({
-    roomCode: 'SG-7',
-    date: getNextWeekdayYMD(),
-    startTime: '08:00',
-    endTime: '10:00',
-    reason: 'Perkuliahan dilaksanakan secara Daring (Online)'
-  });
+  // Sync initialRoom when passed or updated from floor plan
+  useEffect(() => {
+    if (initialRoom) {
+      setFormData(prev => ({ ...prev, roomCode: initialRoom }));
+    }
+  }, [initialRoom]);
 
+  // Keep title synced when category or selectedCourse changes
   useEffect(() => {
     if (formData.category === 'PRAKTIKUM') {
-      const fullTitle = moduleTopic.trim()
-        ? `Praktikum ${selectedCourse} - ${moduleTopic.trim()}`
-        : `Praktikum ${selectedCourse}`;
-      setFormData(prev => ({ ...prev, title: fullTitle }));
+      setFormData(prev => ({ ...prev, title: `Praktikum ${selectedCourse}` }));
     }
-  }, [selectedCourse, moduleTopic, formData.category]);
+  }, [selectedCourse, formData.category]);
 
   const [selectedLoan, setSelectedLoan] = useState({
     reservationId: '',
-    projectorCode: '01'
+    projectorCode: ''
   });
 
   const loadData = async () => {
@@ -63,7 +70,9 @@ export default function PJDashboard({ currentUser }) {
         setReservations(pData);
         if (pData.length > 0 && !selectedLoan.reservationId) {
           const published = pData.find(r => r.status === 'PUBLISHED');
-          if (published) setSelectedLoan(prev => ({ ...prev, reservationId: published.id }));
+          if (published) {
+            setSelectedLoan(prev => ({ ...prev, reservationId: published.id }));
+          }
         }
       }
       if (resProjector.ok) {
@@ -106,26 +115,35 @@ export default function PJDashboard({ currentUser }) {
   const handleCreateAndPublish = async () => {
     setMessage({ text: '', type: '' });
     try {
-      const res = await fetch('/api/practicum/draft', {
+      const resDraft = await fetch('/api/practicum/draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           userId: currentUser.id,
           pjNim: currentUser.nim,
-          pjName: currentUser.name,
-          organizerNim: currentUser.nim,
-          organizerName: currentUser.name
+          pjName: currentUser.name
         })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal membuat reservasi');
+      const draftData = await resDraft.json();
+      if (!resDraft.ok) throw new Error(draftData.error || 'Gagal membuat draft');
 
-      const pubRes = await fetch(`/api/practicum/${data.id}/publish`, { method: 'POST' });
-      const pubData = await pubRes.json();
-      if (!pubRes.ok) throw new Error(pubData.error || 'Gagal menerbitkan reservasi');
+      const resPub = await fetch(`/api/practicum/${draftData.id}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          pjNim: currentUser.nim
+        })
+      });
+      const pubData = await resPub.json();
+      if (!resPub.ok) throw new Error(pubData.error || 'Gagal menerbitkan reservasi');
 
-      setMessage({ text: 'Reservasi praktikum berhasil dibuat dan langsung DITERBITKAN anti-bentrok!', type: 'success' });
+      setMessage({
+        text: `Sukses! Reservasi "${formData.title}" di ruang ${formData.roomCode} berhasil diterbitkan langsung.`,
+        type: 'success'
+      });
+      setSelectedLoan(prev => ({ ...prev, reservationId: draftData.id }));
       loadData();
     } catch (err) {
       setMessage({ text: err.message, type: 'error' });
@@ -136,11 +154,16 @@ export default function PJDashboard({ currentUser }) {
     setMessage({ text: '', type: '' });
     try {
       const res = await fetch(`/api/practicum/${id}/publish`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          pjNim: currentUser.nim
+        })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal menerbitkan reservasi');
-      setMessage({ text: 'Reservasi praktikum SAH dan diterbitkan anti-bentrok!', type: 'success' });
+      if (!res.ok) throw new Error(data.error || 'Gagal mempublikasikan');
+      setMessage({ text: 'Praktikum resmi diterbitkan! Ruangan sekarang terkunci.', type: 'success' });
       loadData();
     } catch (err) {
       setMessage({ text: err.message, type: 'error' });
@@ -148,63 +171,111 @@ export default function PJDashboard({ currentUser }) {
   };
 
   const handleCancel = async (id) => {
-    if (!confirm('Batalkan reservasi ini?')) return;
+    if (!window.confirm('Batalkan reservasi ini? Ruangan akan kembali kosong.')) return;
     try {
-      const res = await fetch(`/api/practicum/${id}/cancel`, { method: 'POST' });
-      if (res.ok) loadData();
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  const handleCreateOverride = async (e) => {
-    e.preventDefault();
-    setMessage({ text: '', type: '' });
-    try {
-      const res = await fetch('/api/schedules/override', {
+      const res = await fetch(`/api/practicum/${id}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...overrideData,
-          status: 'RELEASED',
-          releasedByNim: currentUser.nim,
-          releasedByName: currentUser.name
+          userId: currentUser.id,
+          pjNim: currentUser.nim
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal melepaskan ruangan');
-      setMessage({ text: `Ruangan ${overrideData.roomCode} berhasil dilepaskan untuk tanggal ${overrideData.date}`, type: 'success' });
+      if (!res.ok) throw new Error(data.error || 'Gagal membatalkan');
+      setMessage({ text: 'Reservasi berhasil dibatalkan.', type: 'success' });
+      loadData();
     } catch (err) {
       setMessage({ text: err.message, type: 'error' });
     }
   };
 
+  // Published reservation selected for loan
+  const publishedReservations = reservations.filter(r => r.status === 'PUBLISHED');
+  const activeReservationForLoan = publishedReservations.find(r => r.id === selectedLoan.reservationId) || publishedReservations[0];
+
+  // Calculate H-3 distance for projector borrowing
+  const todayWita = getWitaDateYMD();
+  let loanDiffDays = null;
+  let isLoanAllowed = false;
+  let loanNoticeMessage = '';
+
+  if (activeReservationForLoan) {
+    const todayD = new Date(todayWita + 'T00:00:00');
+    const resD = new Date(activeReservationForLoan.date + 'T00:00:00');
+    loanDiffDays = Math.round((resD - todayD) / (1000 * 60 * 60 * 24));
+
+    if (loanDiffDays < 0) {
+      isLoanAllowed = false;
+      loanNoticeMessage = `Tanggal reservasi (${activeReservationForLoan.date}) sudah lewat.`;
+    } else if (loanDiffDays > 3) {
+      isLoanAllowed = false;
+      loanNoticeMessage = `Peminjaman proyektor baru dapat diajukan H-3 s.d. hari H pelaksanaan. (Jadwal: ${activeReservationForLoan.date}, saat ini H-${loanDiffDays}).`;
+    } else {
+      isLoanAllowed = true;
+      loanNoticeMessage = `Jadwal memenuhi syarat peminjaman proyektor (${loanDiffDays === 0 ? 'Hari H' : `H-${loanDiffDays} hari H`}).`;
+    }
+  }
+
+  // Determine building of selected reservation to filter projectors
+  const resRoomCode = activeReservationForLoan?.roomCode || formData.roomCode;
+  const isJtiRoom = resRoomCode.startsWith('JTI') || resRoomCode === 'Lab-JTI';
+  const targetBuilding = isJtiRoom ? 'JTI' : 'GSG';
+
+  const availableProjectors = projectors.filter(p => {
+    const pBuilding = p.building || (p.code.startsWith('JTI') ? 'JTI' : 'GSG');
+    return pBuilding === targetBuilding && p.status === 'AVAILABLE';
+  });
+
+  // Ensure selected projector belongs to available list
+  useEffect(() => {
+    if (availableProjectors.length > 0) {
+      const exists = availableProjectors.some(p => p.code === selectedLoan.projectorCode);
+      if (!exists) {
+        setSelectedLoan(prev => ({ ...prev, projectorCode: availableProjectors[0].code }));
+      }
+    }
+  }, [targetBuilding, availableProjectors.length]);
+
   const handleBorrowProjector = async (e) => {
     e.preventDefault();
-    setMessage({ text: '', type: '' });
-    if (!selectedLoan.reservationId) {
-      setMessage({ text: 'Pilih nomor reservasi ruangan praktikum aktif terlebih dahulu!', type: 'error' });
+    if (!activeReservationForLoan) {
+      setMessage({ text: 'Silakan pilih reservasi ruangan aktif terlebih dahulu.', type: 'error' });
       return;
     }
+    if (!isLoanAllowed) {
+      setMessage({ text: loanNoticeMessage, type: 'error' });
+      return;
+    }
+    if (!selectedLoan.projectorCode) {
+      setMessage({ text: 'Tidak ada unit proyektor tersedia.', type: 'error' });
+      return;
+    }
+
     try {
       const res = await fetch('/api/projectors/borrow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectorCode: selectedLoan.projectorCode,
-          reservationId: selectedLoan.reservationId,
+          reservationId: activeReservationForLoan.id,
           borrowerName: currentUser.name,
           borrowerNim: currentUser.nim
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal meminjam proyektor');
-      setMessage({ text: `Peminjaman Unit Proyektor ${selectedLoan.projectorCode} berhasil dicatat! Ambil unit di ruang petugas GSG.`, type: 'success' });
+      setMessage({
+        text: `Peminjaman Unit Proyektor ${selectedLoan.projectorCode} berhasil dicatat! Ambil unit di ruang petugas ${targetBuilding}.`,
+        type: 'success'
+      });
       loadData();
     } catch (err) {
       setMessage({ text: err.message, type: 'error' });
     }
   };
+
+  const isSelectedRoomJti = formData.roomCode.startsWith('JTI') || formData.roomCode === 'Lab-JTI';
 
   return (
     <div className="space-y-6">
@@ -240,29 +311,31 @@ export default function PJDashboard({ currentUser }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Kolom Kiri: Reservasi Praktikum & Kegiatan Organisasi */}
+        {/* Kolom Kiri: Form Reservasi Ruangan */}
         <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
           <div className="border-b border-white/10 pb-4">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
               <h3 className="text-base font-semibold text-white tracking-tight">
-                Reservasi Ruangan (Praktikum / HIMA / Lainnya)
+                Reservasi Ruangan
               </h3>
             </div>
-            <p className="text-xs text-zinc-400 mt-1">Dukungan kegiatan perkuliahan, organisasi HIMA Untad, atau kegiatan lainnya.</p>
+            <p className="text-xs text-zinc-400 mt-1">
+              Pilih ruangan langsung dari denah interaktif, tentukan jadwal, dan terbitkan reservasi.
+            </p>
           </div>
 
           <div className="space-y-4">
-            {/* Opsi Kategori Reservasi */}
+            {/* Opsi Kategori Reservasi: Hanya 2 (Praktikum & Lainnya) */}
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tujuan / Kategori Reservasi</label>
-              <div className="grid grid-cols-3 gap-2">
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tujuan Reservasi</label>
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, category: 'PRAKTIKUM', title: 'Praktikum Rekayasa Perangkat Lunak' }))}
-                  className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
+                  onClick={() => setFormData(prev => ({ ...prev, category: 'PRAKTIKUM', title: `Praktikum ${selectedCourse}` }))}
+                  className={`py-2 px-3 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
                     formData.category === 'PRAKTIKUM'
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-semibold'
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-semibold shadow-[0_0_12px_rgba(6,182,212,0.2)]'
                       : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:text-zinc-200'
                   }`}
                 >
@@ -270,21 +343,10 @@ export default function PJDashboard({ currentUser }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, category: 'HIMA_ORMAWA', title: 'Rapat / Kegiatan HIMA SIFOR' }))}
-                  className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
-                    formData.category === 'HIMA_ORMAWA'
-                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-semibold'
-                      : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:text-zinc-200'
-                  }`}
-                >
-                  HIMA / Ormawa
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, category: 'LAINNYA', title: 'Kegiatan Lainnya' }))}
-                  className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
+                  onClick={() => setFormData(prev => ({ ...prev, category: 'LAINNYA', title: 'Kegiatan Mahasiswa / Umum' }))}
+                  className={`py-2 px-3 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
                     formData.category === 'LAINNYA'
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold shadow-[0_0_12px_rgba(245,158,11,0.2)]'
                       : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:text-zinc-200'
                   }`}
                 >
@@ -293,21 +355,45 @@ export default function PJDashboard({ currentUser }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan GSG</label>
-                <select
-                  value={formData.roomCode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, roomCode: e.target.value }))}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
-                >
-                  {ROOM_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </div>
+            {/* Pemilihan Ruangan: Langsung dari Denah, Tanpa Dropdown List */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan Terpilih</label>
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-950/80 border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-bold font-mono text-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                    {formData.roomCode}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white tracking-tight">
+                        Ruang {formData.roomCode}
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-cyan-300">
+                        {isSelectedRoomJti ? 'Gedung JTI' : 'Gedung GSG'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">
+                      {isSelectedRoomJti ? 'Fasilitas JTI FT-Untad' : 'Fasilitas GSG FT-Untad'}
+                    </p>
+                  </div>
+                </div>
 
+                <button
+                  type="button"
+                  onClick={onNavigateToFloorPlan}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Pilih dari Denah</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Tanggal & Waktu */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-medium text-zinc-300">Hari & Tanggal</label>
+                  <label className="block text-xs font-medium text-zinc-300">Tanggal</label>
                   <span className={`text-[10px] font-mono ${isWeekend(formData.date) ? 'text-rose-400 font-bold' : 'text-zinc-400'}`}>
                     {getDayOfWeek(formData.date)}
                   </span>
@@ -321,11 +407,9 @@ export default function PJDashboard({ currentUser }) {
                   }`}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Mulai (WITA)</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Mulai (WITA)</label>
                 <input
                   type="time"
                   value={formData.startTime}
@@ -335,7 +419,7 @@ export default function PJDashboard({ currentUser }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Selesai (WITA)</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Selesai (WITA)</label>
                 <input
                   type="time"
                   value={formData.endTime}
@@ -345,57 +429,36 @@ export default function PJDashboard({ currentUser }) {
               </div>
             </div>
 
-            {/* Opsi Pemilihan Mata Kuliah untuk Praktikum */}
+            {/* Form Konten: Praktikum Mata Kuliah vs Acara Lainnya */}
             {formData.category === 'PRAKTIKUM' ? (
               <div className="space-y-3 p-3.5 rounded-2xl bg-cyan-500/5 border border-cyan-500/20">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-medium text-cyan-300 flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5" />
-                      Pilih Mata Kuliah Kurikulum ({pjClassTitle})
-                    </label>
-                    <span className="text-[10px] text-zinc-400">Semester {classMeta?.semester || 3}</span>
-                  </div>
-                  <select
-                    value={selectedCourse}
-                    onChange={(e) => setSelectedCourse(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-950/90 border border-cyan-500/30 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 cursor-pointer"
-                  >
-                    {availableCourses.map((c) => (
-                      <option key={c.name} value={c.name}>
-                        {c.name} {c.hasLab ? '• Ada Praktikum' : ''} ({c.sks} SKS)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                    Modul / Topik Praktikum (Manual)
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-medium text-cyan-300 flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    Pilih Mata Kuliah Kurikulum ({pjClassTitle})
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Modul 2 - UML & Diagram Alur"
-                    value={moduleTopic}
-                    onChange={(e) => setModuleTopic(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
-                  />
+                  <span className="text-[10px] text-zinc-400 font-mono">Semester {classMeta?.semester || 3}</span>
                 </div>
+                <select
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-950/90 border border-cyan-500/30 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 cursor-pointer"
+                >
+                  {availableCourses.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name} {c.hasLab ? '• Ada Praktikum' : ''} ({c.sks} SKS)
+                    </option>
+                  ))}
+                </select>
               </div>
             ) : (
               <div>
                 <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                  {formData.category === 'HIMA_ORMAWA'
-                    ? 'Nama Kegiatan / Divisi HIMA'
-                    : 'Nama Acara / Kegiatan'}
+                  Nama Kegiatan / Acara
                 </label>
                 <input
                   type="text"
-                  placeholder={
-                    formData.category === 'HIMA_ORMAWA'
-                      ? 'Contoh: Rapat Kerja HIMA SIFOR - Panitia Dies Natalis'
-                      : 'Contoh: Persiapan Lomba Hackathon Kampus'
-                  }
+                  placeholder="Contoh: Rapat Koordinasi, Pelatihan, atau Kegiatan Mahasiswa"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
@@ -403,24 +466,22 @@ export default function PJDashboard({ currentUser }) {
               </div>
             )}
 
-            {/* Kolom Alasan / Deskripsi Tujuan Reservasi */}
+            {/* Alasan / Catatan Tujuan */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-zinc-300">
-                  Alasan / Keterangan Reservasi
+                  {formData.category === 'LAINNYA' ? 'Alasan / Tujuan Kegiatan' : 'Catatan Tambahan (Opsional)'}
                 </label>
-                {formData.category !== 'PRAKTIKUM' && (
+                {formData.category === 'LAINNYA' && (
                   <span className="text-[10px] text-amber-400 font-mono">Wajib diisi</span>
                 )}
               </div>
               <textarea
                 rows={2}
                 placeholder={
-                  formData.category === 'HIMA_ORMAWA'
-                    ? 'Tulis alasan penggunaan ruangan oleh HIMA/Ormawa...'
-                    : formData.category === 'LAINNYA'
-                    ? 'Tulis alasan dan keperluan kegiatan di GSG...'
-                    : 'Catatan tambahan (opsional)...'
+                  formData.category === 'LAINNYA'
+                    ? 'Tuliskan alasan dan tujuan penggunaan ruangan...'
+                    : 'Catatan peralatan, materi, atau informasi praktikum...'
                 }
                 value={formData.purpose}
                 onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
@@ -428,11 +489,11 @@ export default function PJDashboard({ currentUser }) {
               />
             </div>
 
-            {/* Peringatan Hari Sabtu/Minggu (GSG Tutup) */}
+            {/* Peringatan Hari Libur Akhir Pekan */}
             {isWeekend(formData.date) && (
               <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>Gedung GSG tutup pada hari <b>{getDayOfWeek(formData.date)}</b> (Akhir Pekan). Harap pilih hari operasional Senin - Jumat.</span>
+                <span>Gedung perkuliahan tutup pada hari <b>{getDayOfWeek(formData.date)}</b>. Silakan pilih hari Senin - Jumat.</span>
               </div>
             )}
 
@@ -465,152 +526,107 @@ export default function PJDashboard({ currentUser }) {
           </div>
         </div>
 
-        {/* Kolom Kanan: Lepas Ruangan (Override) & Sewa Proyektor */}
-        <div className="space-y-6">
-          {/* Form Lepas Ruangan */}
-          <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-4">
-            <div className="border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                <h3 className="text-base font-semibold text-white tracking-tight">
-                  Lepaskan Slot Kuliah (Daring / Kosong)
-                </h3>
-              </div>
-              <p className="text-xs text-zinc-400 mt-1">Mengubah slot kuliah SIGA menjadi TERSEDIA untuk praktikum.</p>
+        {/* Kolom Kanan: Peminjaman Proyektor (Hanya Setelah Ada Ruangan & Dekat Hari H) */}
+        <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-4">
+          <div className="border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+              <h3 className="text-base font-semibold text-white tracking-tight">
+                Peminjaman Proyektor Gedung ({targetBuilding})
+              </h3>
             </div>
-
-            <form onSubmit={handleCreateOverride} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan</label>
-                  <select
-                    value={overrideData.roomCode}
-                    onChange={(e) => setOverrideData({ ...overrideData, roomCode: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
-                  >
-                    {ROOM_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-medium text-zinc-300">Hari & Tanggal</label>
-                    <span className={`text-[10px] font-mono ${isWeekend(overrideData.date) ? 'text-rose-400 font-bold' : 'text-zinc-400'}`}>
-                      {getDayOfWeek(overrideData.date)}
-                    </span>
-                  </div>
-                  <input
-                    type="date"
-                    value={overrideData.date}
-                    onChange={(e) => setOverrideData({ ...overrideData, date: e.target.value })}
-                    className={`w-full px-3 py-2 bg-zinc-950/80 border rounded-xl text-xs text-zinc-200 focus:outline-none ${
-                      isWeekend(overrideData.date) ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-400' : 'border-white/10 focus:border-cyan-400'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Mulai</label>
-                  <input
-                    type="time"
-                    value={overrideData.startTime}
-                    onChange={(e) => setOverrideData({ ...overrideData, startTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Selesai</label>
-                  <input
-                    type="time"
-                    value={overrideData.endTime}
-                    onChange={(e) => setOverrideData({ ...overrideData, endTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Alasan / Catatan</label>
-                <input
-                  type="text"
-                  value={overrideData.reason}
-                  onChange={(e) => setOverrideData({ ...overrideData, reason: e.target.value })}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
-                />
-              </div>
-
-              {isWeekend(overrideData.date) && (
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                  <span>GSG tutup hari {getDayOfWeek(overrideData.date)}. Pilih Senin - Jumat.</span>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isWeekend(overrideData.date)}
-                className={`w-full py-2.5 text-xs font-medium rounded-xl border transition ${
-                  isWeekend(overrideData.date)
-                    ? 'opacity-30 cursor-not-allowed bg-zinc-900 border-zinc-800 text-zinc-600'
-                    : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border-amber-500/30 cursor-pointer'
-                }`}
-              >
-                Lepaskan Slot Ruangan Ini
-              </button>
-            </form>
+            <p className="text-xs text-zinc-400 mt-1">
+              Peminjaman proyektor wajib terikat pada reservasi ruangan aktif dan hanya dapat dipinjam mendekati hari H (H-3 s.d. hari H).
+            </p>
           </div>
 
-          {/* Form Sewa Proyektor */}
-          <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-4">
-            <div className="border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-                <h3 className="text-base font-semibold text-white tracking-tight">
-                  Peminjaman Unit Proyektor (Unit 01 - 11)
-                </h3>
-              </div>
-              <p className="text-xs text-zinc-400 mt-1">Wajib terikat pada reservasi berstatus PUBLISHED.</p>
+          {publishedReservations.length === 0 ? (
+            <div className="p-5 rounded-2xl bg-zinc-900/60 border border-white/10 text-center space-y-2">
+              <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto" />
+              <p className="text-xs font-semibold text-zinc-200">Belum Ada Reservasi Ruangan Terbit</p>
+              <p className="text-[11px] text-zinc-400 max-w-sm mx-auto">
+                Silakan pesan dan terbitkan reservasi ruangan terlebih dahulu di kolom sebelah kiri sebelum meminjam proyektor.
+              </p>
             </div>
-
-            <form onSubmit={handleBorrowProjector} className="space-y-3">
+          ) : (
+            <form onSubmit={handleBorrowProjector} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Reservasi Praktikum Terbit</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Pilih Reservasi Ruangan Terbit</label>
                 <select
-                  value={selectedLoan.reservationId}
-                  onChange={(e) => setSelectedLoan({ ...selectedLoan, reservationId: e.target.value })}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
+                  value={activeReservationForLoan?.id || ''}
+                  onChange={(e) => setSelectedLoan(prev => ({ ...prev, reservationId: e.target.value }))}
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
                 >
-                  <option value="">-- Pilih Reservasi Terbit --</option>
-                  {reservations.filter(r => r.status === 'PUBLISHED').map(r => (
+                  {publishedReservations.map(r => (
                     <option key={r.id} value={r.id}>
-                      {r.roomCode} ({r.date} {r.startTime}-{r.endTime}) - {r.title}
+                      Ruang {r.roomCode} ({r.date} {r.startTime}-{r.endTime}) • {r.title}
                     </option>
                   ))}
                 </select>
               </div>
 
+              {/* Status Validasi H-3 Hari H */}
+              <div className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                isLoanAllowed
+                  ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                  : 'bg-amber-500/10 border-amber-500/25 text-amber-300'
+              }`}>
+                {isLoanAllowed ? (
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <div className="font-semibold">
+                    {isLoanAllowed ? 'Siap Dipinjam' : 'Belum Memasuki Waktu Peminjaman'}
+                  </div>
+                  <p className="text-[11px] mt-0.5 leading-relaxed opacity-90">
+                    {loanNoticeMessage}
+                  </p>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Pilih Unit Proyektor Tersedia</label>
-                <select
-                  value={selectedLoan.projectorCode}
-                  onChange={(e) => setSelectedLoan({ ...selectedLoan, projectorCode: e.target.value })}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
-                >
-                  {projectors.filter(p => p.status === 'AVAILABLE').map(p => (
-                    <option key={p.code} value={p.code}>Unit {p.code} ({p.brand})</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-medium text-zinc-300">
+                    Pilih Unit Proyektor Tersedia ({targetBuilding})
+                  </label>
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {availableProjectors.length} unit siap
+                  </span>
+                </div>
+                {availableProjectors.length === 0 ? (
+                  <div className="p-3 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-400">
+                    Semua unit proyektor di {targetBuilding} sedang terpakai atau tidak tersedia.
+                  </div>
+                ) : (
+                  <select
+                    value={selectedLoan.projectorCode}
+                    onChange={(e) => setSelectedLoan(prev => ({ ...prev, projectorCode: e.target.value }))}
+                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
+                  >
+                    {availableProjectors.map(p => (
+                      <option key={p.code} value={p.code}>
+                        Unit {p.code} ({p.brand || targetBuilding})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-zinc-950 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.25)] transition"
+                disabled={!isLoanAllowed || availableProjectors.length === 0}
+                className={`w-full py-2.5 text-xs font-semibold rounded-xl transition ${
+                  !isLoanAllowed || availableProjectors.length === 0
+                    ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border border-white/5'
+                    : 'bg-cyan-500 hover:bg-cyan-400 text-zinc-950 shadow-[0_0_15px_rgba(6,182,212,0.25)] cursor-pointer'
+                }`}
               >
                 Pinjam Unit Proyektor
               </button>
             </form>
-          </div>
+          )}
         </div>
       </div>
 
@@ -627,8 +643,8 @@ export default function PJDashboard({ currentUser }) {
                   <th className="px-4 py-3">Ruang</th>
                   <th className="px-4 py-3">Tanggal</th>
                   <th className="px-4 py-3">Waktu (WITA)</th>
-                  <th className="px-4 py-3">Kategori & Kegiatan</th>
-                  <th className="px-4 py-3">Alasan / Tujuan</th>
+                  <th className="px-4 py-3">Tujuan & Nama Kegiatan</th>
+                  <th className="px-4 py-3">Alasan / Catatan</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Aksi</th>
                 </tr>
@@ -641,11 +657,7 @@ export default function PJDashboard({ currentUser }) {
                     <td className="px-4 py-3 font-mono text-zinc-300">{item.startTime} - {item.endTime}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        {item.category === 'HIMA_ORMAWA' ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                            HIMA
-                          </span>
-                        ) : item.category === 'LAINNYA' ? (
+                        {item.category === 'LAINNYA' ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
                             Lainnya
                           </span>
@@ -663,7 +675,9 @@ export default function PJDashboard({ currentUser }) {
                     <td className="px-4 py-3">
                       <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] border ${
                         item.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
-                        item.status === 'DRAFT' ? 'glass-pill text-zinc-300 border-white/10' : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+                        item.status === 'DRAFT' ? 'glass-pill text-zinc-300 border-white/10' :
+                        item.status === 'COMPLETED' ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20' :
+                        'bg-rose-500/10 text-rose-300 border-rose-500/20'
                       }`}>
                         {item.status}
                       </span>
@@ -677,7 +691,7 @@ export default function PJDashboard({ currentUser }) {
                           Terbitkan
                         </button>
                       )}
-                      {item.status !== 'CANCELLED' && (
+                      {item.status !== 'CANCELLED' && item.status !== 'COMPLETED' && (
                         <button
                           onClick={() => handleCancel(item.id)}
                           className="px-3 py-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"

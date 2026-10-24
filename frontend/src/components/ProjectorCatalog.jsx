@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Tv, Sparkles, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
+  const [selectedBuilding, setSelectedBuilding] = useState('GSG');
   const [projectors, setProjectors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProjector, setSelectedProjector] = useState(null);
 
   const fetchProjectors = async () => {
     try {
-      const res = await fetch('/api/projectors');
+      const res = await fetch(`/api/projectors?building=${selectedBuilding}`);
       const data = await res.json();
       setProjectors(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -22,7 +23,7 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
     fetchProjectors();
     const interval = setInterval(fetchProjectors, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedBuilding]);
 
   const totalUsed = projectors.filter((p) => p.isUsed || p.status === 'IN_USE').length;
   const totalAvailable = projectors.filter((p) => p.status === 'AVAILABLE').length;
@@ -34,24 +35,49 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-            <span className="text-xs font-mono text-cyan-300 uppercase tracking-wider">Live Inventory GSG</span>
+            <span className="text-xs font-mono text-cyan-300 uppercase tracking-wider">Live Inventory {selectedBuilding}</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
-            Katalog & Status 11 Unit Proyektor GSG
+            Katalog & Status Unit Proyektor Gedung {selectedBuilding}
           </h3>
           <p className="text-xs text-zinc-400 mt-1.5 max-w-xl leading-relaxed">
-            Pantauan live keterpakaian 11 unit proyektor GSG FT-UNTAD (Unit 01 s.d. 11). Klik masing-masing unit untuk melihat riwayat log audit dan peminjam terkini.
+            {selectedBuilding === 'GSG'
+              ? 'Pantauan live keterpakaian 11 unit proyektor GSG FT-UNTAD (Unit 01 s.d. 11). Klik masing-masing unit untuk melihat riwayat log audit dan peminjam terkini.'
+              : 'Pantauan live keterpakaian 3 unit proyektor khusus Gedung JTI FT-UNTAD (JTI-01 s.d. JTI-03). Klik masing-masing unit untuk melihat riwayat peminjam.'}
           </p>
         </div>
 
-        {/* Counter Badges */}
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-3 rounded-2xl bg-emerald-500/[0.08] border border-emerald-500/20 text-center min-w-[100px]">
-            <div className="text-xl font-bold font-mono text-emerald-300">{totalAvailable}</div>
+        {/* Building Switcher & Counter Badges */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex p-1 bg-zinc-900/80 rounded-2xl border border-white/10">
+            <button
+              onClick={() => setSelectedBuilding('GSG')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition cursor-pointer ${
+                selectedBuilding === 'GSG'
+                  ? 'bg-cyan-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              GSG (11 Unit)
+            </button>
+            <button
+              onClick={() => setSelectedBuilding('JTI')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition cursor-pointer ${
+                selectedBuilding === 'JTI'
+                  ? 'bg-cyan-500 text-zinc-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              JTI (3 Unit)
+            </button>
+          </div>
+
+          <div className="px-4 py-2.5 rounded-2xl bg-emerald-500/[0.08] border border-emerald-500/20 text-center min-w-[90px]">
+            <div className="text-lg font-bold font-mono text-emerald-300">{totalAvailable}</div>
             <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Tersedia</div>
           </div>
-          <div className="px-4 py-3 rounded-2xl bg-amber-500/[0.08] border border-amber-500/20 text-center min-w-[100px]">
-            <div className="text-xl font-bold font-mono text-amber-300">{totalUsed}</div>
+          <div className="px-4 py-2.5 rounded-2xl bg-amber-500/[0.08] border border-amber-500/20 text-center min-w-[90px]">
+            <div className="text-lg font-bold font-mono text-amber-300">{totalUsed}</div>
             <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Terpakai</div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 const prisma = require('../db');
+const { getWitaDateYMD } = require('../utils/timeUtils');
 
 async function getProjectors(building = 'GSG') {
   const where = {};
@@ -74,6 +75,23 @@ async function borrowProjector({ projectorCode, reservationId, borrowerName, bor
 
   if (!reservation || reservation.status !== 'PUBLISHED') {
     const err = new Error('Borrowing a projector requires an active, published room reservation');
+    err.status = 400;
+    throw err;
+  }
+
+  // Validate schedule date: Projector can only be borrowed approaching the event (within 3 days or on the day of reservation)
+  const todayStr = getWitaDateYMD();
+  const todayDate = new Date(todayStr + 'T00:00:00');
+  const resDate = new Date(reservation.date + 'T00:00:00');
+  const diffDays = Math.round((resDate - todayDate) / (1000 * 60 * 60 * 24));
+
+  if (diffDays > 3) {
+    const err = new Error(`Proyektor hanya dapat dipinjam mendekati hari H pelaksanaan (${reservation.date}). Peminjaman dibuka H-3 atau pada hari H.`);
+    err.status = 400;
+    throw err;
+  }
+  if (diffDays < 0) {
+    const err = new Error(`Jadwal reservasi ini (${reservation.date}) sudah lewat.`);
     err.status = 400;
     throw err;
   }

@@ -64,7 +64,7 @@ export default function PetugasDashboard({ currentUser }) {
         body: JSON.stringify({ conditionNotes })
       });
       if (!res.ok) throw new Error('Gagal mencatat pengembalian proyektor');
-      setMessage({ text: 'Pengembalian proyektor berhasil dicatat!', type: 'success' });
+      setMessage({ text: 'Pengembalian proyektor berhasil dicatat! Reservasi ruangan otomatis dilepaskan (RELEASED / COMPLETED).', type: 'success' });
       setReturnLoanId(null);
       loadData();
     } catch (err) {

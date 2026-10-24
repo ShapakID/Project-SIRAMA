@@ -29,6 +29,7 @@ export default function App() {
     }
     return 'denah';
   });
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
 
@@ -159,6 +160,7 @@ export default function App() {
           <GSGFloorPlan
             currentUser={currentUser}
             onSelectRoom={(roomCode) => {
+              setSelectedRoom(roomCode);
               if (currentUser && currentUser.role === 'PJ') {
                 switchTab('pj');
               } else if (currentUser && currentUser.role === 'PETUGAS') {
@@ -184,7 +186,11 @@ export default function App() {
 
         {activeTab === 'pj' && (
           currentUser && currentUser.role === 'PJ' ? (
-            <PJDashboard currentUser={currentUser} />
+            <PJDashboard
+              currentUser={currentUser}
+              initialRoom={selectedRoom}
+              onNavigateToFloorPlan={() => switchTab('denah')}
+            />
           ) : (
             <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-white/10 text-center shadow-xl shadow-black/40">
               <p className="text-sm text-zinc-300">Silakan masuk sebagai Penanggung Jawab (PJ) Kelas untuk mengakses panel ini.</p>

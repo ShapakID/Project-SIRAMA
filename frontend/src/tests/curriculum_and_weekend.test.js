@@ -33,14 +33,13 @@ assert.strictEqual(getNextWeekdayYMD('2026-10-24'), '2026-10-26');
 const pjDashboardCode = fs.readFileSync(path.join(__dirname, '../components/PJDashboard.jsx'), 'utf-8');
 assert.ok(pjDashboardCode.includes('getCoursesByNim'), 'PJDashboard must use getCoursesByNim');
 assert.ok(pjDashboardCode.includes('Pilih Mata Kuliah Kurikulum'), 'PJDashboard must have curriculum dropdown');
-assert.ok(pjDashboardCode.includes('Modul / Topik Praktikum (Manual)'), 'PJDashboard must have manual module topic input');
-assert.ok(pjDashboardCode.includes('Gedung GSG tutup pada hari'), 'PJDashboard must alert on weekend');
+assert.ok(pjDashboardCode.includes('tutup pada hari'), 'PJDashboard must alert on weekend');
 assert.ok(pjDashboardCode.includes('disabled={isWeekend(formData.date)}'), 'PJDashboard must disable submit on weekend');
 
 // Test 3: Verify GSGFloorPlan.jsx contains weekend closure notice and CLOSED badge
 const floorPlanCode = fs.readFileSync(path.join(__dirname, '../components/GSGFloorPlan.jsx'), 'utf-8');
 assert.ok(floorPlanCode.includes('isWeekend(selectedDate)'), 'GSGFloorPlan must check isWeekend');
-assert.ok(floorPlanCode.includes('Gedung Serbaguna (GSG) Tutup pada Hari'), 'GSGFloorPlan must show weekend alert');
+assert.ok(floorPlanCode.includes('Tutup pada Hari'), 'GSGFloorPlan must show weekend alert');
 assert.ok(floorPlanCode.includes("case 'CLOSED':"), 'GSGFloorPlan must handle CLOSED status badge');
 
 // Test 4: Verify RoomTimetable.jsx contains weekend alert

@@ -12,7 +12,20 @@ const { createReservationDirect } = require('../src/services/practicumService');
 async function runJtiAndReturnFlowTests() {
   console.log('Testing JTI Building Isolation & Projector Return Flow with Room Release...');
 
-  // 1. Verify JTI Rooms & Projectors
+  // Pre-cleanup any leftover test reservations
+  await prisma.practicumReservation.deleteMany({
+    where: {
+      title: {
+        in: [
+          'Praktikum GSG Testing Cross-Building',
+          'Praktikum JTI Testing Cross-Building',
+          'Praktikum Jauh Hari'
+        ]
+      }
+    }
+  });
+
+  // 1. Verify Rooms and Projectors in JTI
   const jtiRooms = await prisma.room.findMany({ where: { building: 'JTI' }, orderBy: { code: 'asc' } });
   assert.strictEqual(jtiRooms.length, 4, 'Must have 4 JTI rooms');
   const expectedCodes = ['JTI-1', 'JTI-2', 'JTI-3', 'Lab-JTI'];
@@ -83,7 +96,34 @@ async function runJtiAndReturnFlowTests() {
   }
   assert.ok(crossFailed2, 'JTI room must not be allowed to borrow GSG projector');
 
-  // 4. Valid Borrowing for JTI
+  // 3b. Test H-3 borrowing rule: borrow attempt > 3 days before reservation must be rejected
+  const farFutureRes = await createReservationDirect({
+    roomCode: 'JTI-3',
+    date: '2026-11-16',
+    startTime: '08:00',
+    endTime: '10:00',
+    category: 'PRAKTIKUM',
+    title: 'Praktikum Jauh Hari',
+    pjNim: 'F5212510018',
+    pjName: 'Shafairunizar'
+  });
+
+  let h3Rejected = false;
+  try {
+    await borrowProjector({
+      projectorCode: 'JTI-01',
+      reservationId: farFutureRes.id,
+      borrowerName: 'Shafairunizar',
+      borrowerNim: 'F5212510018'
+    });
+  } catch (err) {
+    h3Rejected = true;
+    assert.ok(err.message.includes('mendekati hari H') || err.message.includes('H-3'), 'Error message must specify H-3 constraint');
+  }
+  assert.ok(h3Rejected, 'Borrowing projector > 3 days before reservation date must be rejected');
+  await prisma.practicumReservation.delete({ where: { id: farFutureRes.id } });
+
+  // 4. Valid Borrowing for JTI (within H-3)
   const validLoan = await borrowProjector({
     projectorCode: 'JTI-01',
     reservationId: jtiRes.id,

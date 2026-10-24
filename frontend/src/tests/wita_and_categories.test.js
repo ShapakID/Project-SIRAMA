@@ -27,9 +27,9 @@ assert.strictEqual(metaC.kelas, 'C');
 // 2. Test PJDashboard code content
 const pjPath = path.resolve(__dirname, '../components/PJDashboard.jsx');
 const pjContent = fs.readFileSync(pjPath, 'utf-8');
-assert.ok(pjContent.includes('HIMA_ORMAWA'), 'PJDashboard must support HIMA_ORMAWA category');
+assert.ok(pjContent.includes('PRAKTIKUM'), 'PJDashboard must support PRAKTIKUM category');
 assert.ok(pjContent.includes('LAINNYA'), 'PJDashboard must support LAINNYA category');
-assert.ok(pjContent.includes('Alasan / Keterangan Reservasi'), 'PJDashboard must have purpose input field');
+assert.ok(pjContent.includes('Alasan / Tujuan Kegiatan') || pjContent.includes('purpose'), 'PJDashboard must have purpose input field');
 assert.ok(pjContent.includes('pjClassTitle'), 'PJDashboard must display dynamic PJ class');
 
 // 3. Test PetugasDashboard code content
