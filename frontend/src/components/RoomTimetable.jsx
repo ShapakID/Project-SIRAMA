@@ -32,6 +32,15 @@ export default function RoomTimetable({ onSelectSlot }) {
     fetchAvailability();
   }, [selectedRoom, selectedDate]);
 
+  const parseCourseTitle = (rawName) => {
+    if (!rawName) return { title: 'Kegiatan Ruangan', classTag: null };
+    const match = rawName.match(/^(.*?)\s*\((SI-[A-Z]\s*\d{4})\)$/i);
+    if (match) {
+      return { title: match[1].trim(), classTag: match[2].trim() };
+    }
+    return { title: rawName, classTag: null };
+  };
+
   const getStatusBadge = (slot) => {
     if (slot.category === 'HIMA_ORMAWA') {
       return (
@@ -196,9 +205,16 @@ export default function RoomTimetable({ onSelectSlot }) {
                     </span>
                     {getStatusBadge(slot)}
                   </div>
-                  <h4 className="font-medium text-white text-sm">
-                    {slot.courseName || slot.title || (slot.status === 'AVAILABLE' ? 'Ruangan Siap Digunakan' : 'Pemeliharaan Ruangan')}
-                  </h4>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-medium text-white text-sm">
+                      {parseCourseTitle(slot.courseName || slot.title || (slot.status === 'AVAILABLE' ? 'Ruangan Siap Digunakan' : 'Pemeliharaan Ruangan')).title}
+                    </h4>
+                    {parseCourseTitle(slot.courseName).classTag && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                        Kelas {parseCourseTitle(slot.courseName).classTag}
+                      </span>
+                    )}
+                  </div>
                   {(slot.lecturer || slot.pjName) && (
                     <p className="text-xs text-zinc-400">
                       Penanggung Jawab / Dosen: <span className="font-medium text-zinc-200">{slot.lecturer || slot.pjName}</span>

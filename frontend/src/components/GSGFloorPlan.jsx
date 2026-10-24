@@ -134,6 +134,42 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
     }
   };
 
+  const parseCourseTitle = (rawName) => {
+    if (!rawName) return { title: 'Kegiatan Ruangan', classTag: null };
+    const match = rawName.match(/^(.*?)\s*\((SI-[A-Z]\s*\d{4})\)$/i);
+    if (match) {
+      return { title: match[1].trim(), classTag: match[2].trim() };
+    }
+    return { title: rawName, classTag: null };
+  };
+
+  const renderModalSlotBadge = (status, category) => {
+    if (status === 'OCCUPIED_CLASS') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+          Kuliah Reguler
+        </span>
+      );
+    }
+    if (status === 'PRACTICUM' || status === 'OCCUPIED_PRACTICUM') {
+      const isLainnya = category === 'LAINNYA';
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+          isLainnya ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isLainnya ? 'bg-amber-400' : 'bg-cyan-400'}`}></span>
+          {isLainnya ? 'Kegiatan Lain' : 'Praktikum'}
+        </span>
+      );
+    }
+    return (
+      <span className="px-2 py-0.5 rounded-full text-[10px] bg-zinc-800 text-zinc-300 border border-zinc-700">
+        {status === 'AVAILABLE' ? 'Tersedia' : status}
+      </span>
+    );
+  };
+
   const checkIsOccupiedNow = (room) => {
     if (!room || !room.slots || room.slots.length === 0) return false;
     const currentHM = currentTimeWita || getWitaTimeHM();
@@ -506,25 +542,37 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
 
               {activeRoomModal.slots && activeRoomModal.slots.length > 0 ? (
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {activeRoomModal.slots.map((slot, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl bg-white/5 border border-white/5 text-xs flex items-center justify-between gap-3"
-                    >
-                      <div>
-                        <p className="font-medium text-white">{slot.courseName || slot.title || 'Kegiatan Ruangan'}</p>
-                        <p className="text-zinc-400 text-[11px] mt-0.5">
-                          {slot.lecturer ? `Dosen: ${slot.lecturer.split(':')[0]}` : slot.pjName ? `PJ: ${slot.pjName}` : slot.notes}
-                        </p>
+                  {activeRoomModal.slots.map((slot, idx) => {
+                    const { title, classTag } = parseCourseTitle(slot.courseName || slot.title);
+                    return (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl bg-white/5 border border-white/5 text-xs flex items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-white truncate">{title}</span>
+                            {classTag && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                                Kelas {classTag}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-zinc-400 text-[11px] mt-0.5">
+                            {slot.lecturer ? `Dosen: ${slot.lecturer.split(':')[0]}` : slot.pjName ? `PJ: ${slot.pjName}` : slot.notes}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className="font-mono text-cyan-300 text-[11px] block">
+                            {slot.startTime} - {slot.endTime}
+                          </span>
+                          <div className="mt-1">
+                            {renderModalSlotBadge(slot.status, slot.category)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="font-mono text-cyan-300 text-[11px] block">
-                          {slot.startTime} - {slot.endTime}
-                        </span>
-                        <span className="text-[10px] text-zinc-400 uppercase">{slot.status}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
