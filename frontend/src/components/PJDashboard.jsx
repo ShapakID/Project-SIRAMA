@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Tv, PlusCircle, CheckCircle, AlertCircle, RefreshCw, Send, Trash2, Tag, FileText } from 'lucide-react';
-import { getWitaDateYMD, parseNimMetadata } from '../utils/timeUtils';
+import { Calendar, Clock, Tv, PlusCircle, CheckCircle, AlertCircle, RefreshCw, Send, Trash2, Tag, FileText, BookOpen } from 'lucide-react';
+import { getWitaDateYMD, getNextWeekdayYMD, isWeekend, getDayOfWeek, parseNimMetadata } from '../utils/timeUtils';
+import { getCoursesByNim } from '../utils/curriculumData';
 
 const ROOM_OPTIONS = ['SG-1', 'SG-2', 'SG-3', 'SG-4', 'SG-5', 'SG-6', 'SG-7', 'SG-8', 'SG-9', 'SG-10', 'SG-11', 'Lab-Komputer'];
 
@@ -13,24 +14,37 @@ export default function PJDashboard({ currentUser }) {
   const classMeta = parseNimMetadata(currentUser?.nim);
   const pjClassTitle = classMeta ? classMeta.className : 'SI-A 2025';
 
+  const availableCourses = getCoursesByNim(currentUser?.nim);
+  const [selectedCourse, setSelectedCourse] = useState(() => availableCourses[0]?.name || 'Rekayasa Perangkat Lunak');
+  const [moduleTopic, setModuleTopic] = useState('Modul 1: Pengantar & Persiapan');
+
   // Form states
   const [formData, setFormData] = useState({
     roomCode: 'SG-7',
-    date: getWitaDateYMD(),
+    date: getNextWeekdayYMD(),
     startTime: '10:00',
     endTime: '12:00',
     category: 'PRAKTIKUM',
-    title: 'Praktikum Rekayasa Perangkat Lunak',
+    title: `Praktikum ${availableCourses[0]?.name || 'Rekayasa Perangkat Lunak'} - Modul 1: Pengantar & Persiapan`,
     purpose: ''
   });
 
   const [overrideData, setOverrideData] = useState({
     roomCode: 'SG-7',
-    date: getWitaDateYMD(),
+    date: getNextWeekdayYMD(),
     startTime: '08:00',
     endTime: '10:00',
     reason: 'Perkuliahan dilaksanakan secara Daring (Online)'
   });
+
+  useEffect(() => {
+    if (formData.category === 'PRAKTIKUM') {
+      const fullTitle = moduleTopic.trim()
+        ? `Praktikum ${selectedCourse} - ${moduleTopic.trim()}`
+        : `Praktikum ${selectedCourse}`;
+      setFormData(prev => ({ ...prev, title: fullTitle }));
+    }
+  }, [selectedCourse, moduleTopic, formData.category]);
 
   const [selectedLoan, setSelectedLoan] = useState({
     reservationId: '',
@@ -285,19 +299,26 @@ export default function PJDashboard({ currentUser }) {
                 <select
                   value={formData.roomCode}
                   onChange={(e) => setFormData(prev => ({ ...prev, roomCode: e.target.value }))}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
                 >
                   {ROOM_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tanggal</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-medium text-zinc-300">Hari & Tanggal</label>
+                  <span className={`text-[10px] font-mono ${isWeekend(formData.date) ? 'text-rose-400 font-bold' : 'text-zinc-400'}`}>
+                    {getDayOfWeek(formData.date)}
+                  </span>
+                </div>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
+                  className={`w-full px-3 py-2 bg-zinc-950/80 border rounded-xl text-xs text-zinc-200 focus:outline-none ${
+                    isWeekend(formData.date) ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-400' : 'border-white/10 focus:border-cyan-400'
+                  }`}
                 />
               </div>
             </div>
@@ -324,28 +345,63 @@ export default function PJDashboard({ currentUser }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                {formData.category === 'PRAKTIKUM'
-                  ? 'Nama Praktikum & Modul'
-                  : formData.category === 'HIMA_ORMAWA'
-                  ? 'Nama Kegiatan / Divisi HIMA'
-                  : 'Nama Acara / Kegiatan'}
-              </label>
-              <input
-                type="text"
-                placeholder={
-                  formData.category === 'PRAKTIKUM'
-                    ? 'Contoh: Praktikum RPL - Modul 2 UML & Activity Diagram'
-                    : formData.category === 'HIMA_ORMAWA'
-                    ? 'Contoh: Rapat Kerja HIMA SIFOR - Panitia Dies Natalis'
-                    : 'Contoh: Persiapan Lomba Hackathon Kampus'
-                }
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
-              />
-            </div>
+            {/* Opsi Pemilihan Mata Kuliah untuk Praktikum */}
+            {formData.category === 'PRAKTIKUM' ? (
+              <div className="space-y-3 p-3.5 rounded-2xl bg-cyan-500/5 border border-cyan-500/20">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-medium text-cyan-300 flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5" />
+                      Pilih Mata Kuliah Kurikulum ({pjClassTitle})
+                    </label>
+                    <span className="text-[10px] text-zinc-400">Semester {classMeta?.semester || 3}</span>
+                  </div>
+                  <select
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-950/90 border border-cyan-500/30 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 cursor-pointer"
+                  >
+                    {availableCourses.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name} {c.hasLab ? '• Ada Praktikum' : ''} ({c.sks} SKS)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    Modul / Topik Praktikum (Manual)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Modul 2 - UML & Diagram Alur"
+                    value={moduleTopic}
+                    onChange={(e) => setModuleTopic(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                  {formData.category === 'HIMA_ORMAWA'
+                    ? 'Nama Kegiatan / Divisi HIMA'
+                    : 'Nama Acara / Kegiatan'}
+                </label>
+                <input
+                  type="text"
+                  placeholder={
+                    formData.category === 'HIMA_ORMAWA'
+                      ? 'Contoh: Rapat Kerja HIMA SIFOR - Panitia Dies Natalis'
+                      : 'Contoh: Persiapan Lomba Hackathon Kampus'
+                  }
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+            )}
 
             {/* Kolom Alasan / Deskripsi Tujuan Reservasi */}
             <div>
@@ -372,18 +428,36 @@ export default function PJDashboard({ currentUser }) {
               />
             </div>
 
+            {/* Peringatan Hari Sabtu/Minggu (GSG Tutup) */}
+            {isWeekend(formData.date) && (
+              <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>Gedung GSG tutup pada hari <b>{getDayOfWeek(formData.date)}</b> (Akhir Pekan). Harap pilih hari operasional Senin - Jumat.</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
+                disabled={isWeekend(formData.date)}
                 onClick={handleCreateDraft}
-                className="flex-1 py-2.5 text-xs font-medium glass-pill hover:bg-white/10 text-zinc-300 hover:text-white rounded-xl border border-white/10 transition"
+                className={`flex-1 py-2.5 text-xs font-medium rounded-xl border border-white/10 transition ${
+                  isWeekend(formData.date)
+                    ? 'opacity-30 cursor-not-allowed bg-zinc-900 text-zinc-600'
+                    : 'glass-pill hover:bg-white/10 text-zinc-300 hover:text-white cursor-pointer'
+                }`}
               >
                 Simpan Draft
               </button>
               <button
                 type="button"
+                disabled={isWeekend(formData.date)}
                 onClick={handleCreateAndPublish}
-                className="flex-1 py-2.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.25)] transition"
+                className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition ${
+                  isWeekend(formData.date)
+                    ? 'opacity-30 cursor-not-allowed bg-zinc-800 text-zinc-600'
+                    : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.25)] cursor-pointer'
+                }`}
               >
                 Terbitkan Langsung
               </button>
@@ -418,12 +492,19 @@ export default function PJDashboard({ currentUser }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tanggal</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-medium text-zinc-300">Hari & Tanggal</label>
+                    <span className={`text-[10px] font-mono ${isWeekend(overrideData.date) ? 'text-rose-400 font-bold' : 'text-zinc-400'}`}>
+                      {getDayOfWeek(overrideData.date)}
+                    </span>
+                  </div>
                   <input
                     type="date"
                     value={overrideData.date}
                     onChange={(e) => setOverrideData({ ...overrideData, date: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
+                    className={`w-full px-3 py-2 bg-zinc-950/80 border rounded-xl text-xs text-zinc-200 focus:outline-none ${
+                      isWeekend(overrideData.date) ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-400' : 'border-white/10 focus:border-cyan-400'
+                    }`}
                   />
                 </div>
               </div>
@@ -459,9 +540,21 @@ export default function PJDashboard({ currentUser }) {
                 />
               </div>
 
+              {isWeekend(overrideData.date) && (
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  <span>GSG tutup hari {getDayOfWeek(overrideData.date)}. Pilih Senin - Jumat.</span>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-2.5 text-xs font-medium bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 rounded-xl transition"
+                disabled={isWeekend(overrideData.date)}
+                className={`w-full py-2.5 text-xs font-medium rounded-xl border transition ${
+                  isWeekend(overrideData.date)
+                    ? 'opacity-30 cursor-not-allowed bg-zinc-900 border-zinc-800 text-zinc-600'
+                    : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border-amber-500/30 cursor-pointer'
+                }`}
               >
                 Lepaskan Slot Ruangan Ini
               </button>

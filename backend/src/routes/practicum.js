@@ -5,8 +5,22 @@ const {
   getReservations,
   cancelReservation
 } = require('../services/practicumService');
+const { getCoursesBySemester, getCoursesByNim } = require('../utils/curriculum');
 
 const router = express.Router();
+
+router.get('/courses', (req, res) => {
+  try {
+    const { semester, nim } = req.query;
+    if (nim) {
+      return res.json(getCoursesByNim(nim));
+    }
+    const semNum = parseInt(semester, 10) || 3;
+    return res.json(getCoursesBySemester(semNum));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.get('/', async (req, res) => {
   try {

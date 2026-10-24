@@ -1,5 +1,6 @@
 const prisma = require('../db');
 const { getRoomAvailability } = require('./availabilityService');
+const { isWeekend } = require('../utils/timeUtils');
 
 function timeToMinutes(t) {
   const [h, m] = t.split(':').map(Number);
@@ -12,6 +13,13 @@ function isOverlap(startA, endA, startB, endB) {
 
 async function saveDraft(data) {
   const { id, pjNim, pjName, roomCode, date, startTime, endTime, title, category, purpose } = data;
+
+  if (date && isWeekend(date)) {
+    const err = new Error('Gedung GSG tutup pada hari Sabtu dan Minggu. Silakan pilih hari operasional Senin - Jumat.');
+    err.status = 400;
+    err.statusCode = 400;
+    throw err;
+  }
 
   if (startTime && endTime && timeToMinutes(startTime) >= timeToMinutes(endTime)) {
     const err = new Error('Invalid timeslot: startTime must be before endTime');
@@ -68,6 +76,12 @@ async function publishReservation(reservationId) {
       throw err;
     }
 
+    if (isWeekend(reservation.date)) {
+      const err = new Error('Gedung GSG tutup pada hari Sabtu dan Minggu. Silakan pilih hari operasional Senin - Jumat.');
+      err.status = 400;
+      throw err;
+    }
+
     if (timeToMinutes(reservation.startTime) >= timeToMinutes(reservation.endTime)) {
       const err = new Error('Invalid timeslot: startTime must be before endTime');
       err.status = 400;
@@ -119,10 +133,16 @@ async function cancelReservation(reservationId) {
   });
 }
 
+async function createReservationDirect(data) {
+  const draft = await saveDraft(data);
+  return await publishReservation(draft.id);
+}
+
 module.exports = {
   isOverlap,
   saveDraft,
   publishReservation,
+  createReservationDirect,
   getReservations,
   cancelReservation
 };

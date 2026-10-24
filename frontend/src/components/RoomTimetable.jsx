@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, RefreshCw, AlertTriangle } from 'lucide-react';
+import { getNextWeekdayYMD, isWeekend, getDayOfWeek } from '../utils/timeUtils';
 
 const ROOM_OPTIONS = [
   'SG-1', 'SG-2', 'SG-3', 'SG-4', 'SG-5', 'SG-6', 'SG-7', 'SG-8', 'SG-9', 'SG-10', 'SG-11', 'Lab-Komputer'
@@ -7,10 +8,7 @@ const ROOM_OPTIONS = [
 
 export default function RoomTimetable({ onSelectSlot }) {
   const [selectedRoom, setSelectedRoom] = useState('SG-7');
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [selectedDate, setSelectedDate] = useState(() => getNextWeekdayYMD());
   const [scheduleData, setScheduleData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -151,7 +149,17 @@ export default function RoomTimetable({ onSelectSlot }) {
 
       {/* Timetable content */}
       <div className="p-5 sm:p-7">
-        {loading ? (
+        {isWeekend(selectedDate) ? (
+          <div className="py-16 text-center text-zinc-400">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6 text-rose-400" />
+            </div>
+            <p className="font-semibold text-rose-200 text-base">Gedung GSG Tutup (Akhir Pekan)</p>
+            <p className="text-xs text-zinc-400 mt-1.5 max-w-md mx-auto">
+              Hari {getDayOfWeek(selectedDate)} merupakan akhir pekan. Seluruh ruangan SG 01-12 dan Lab Komputer tidak beroperasi. Silakan pilih hari operasional Senin s.d. Jumat.
+            </p>
+          </div>
+        ) : loading ? (
           <div className="py-16 text-center text-zinc-500">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-cyan-400" />
             <p className="text-sm text-zinc-400">Sinkronisasi status {selectedRoom}...</p>

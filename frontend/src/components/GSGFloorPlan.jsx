@@ -14,11 +14,11 @@ import {
   Shield,
   X
 } from 'lucide-react';
-import { getWitaDateYMD, getWitaTimeHM } from '../utils/timeUtils';
+import { getWitaDateYMD, getWitaTimeHM, getNextWeekdayYMD, isWeekend, getDayOfWeek } from '../utils/timeUtils';
 
 export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTimetable }) {
   const [selectedFloor, setSelectedFloor] = useState(1);
-  const [selectedDate, setSelectedDate] = useState(() => getWitaDateYMD());
+  const [selectedDate, setSelectedDate] = useState(() => getNextWeekdayYMD());
   const [currentTimeWita, setCurrentTimeWita] = useState(() => getWitaTimeHM());
   const [roomsData, setRoomsData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +107,13 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
             <span className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
             Perbaikan
+          </span>
+        );
+      case 'CLOSED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
+            <span className="w-2 h-2 rounded-full bg-rose-400" />
+            Tutup
           </span>
         );
       default:
@@ -322,6 +329,16 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
 
       {/* Main Floor Blueprint Container */}
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 shadow-2xl relative">
+        {isWeekend(selectedDate) && (
+          <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-3 text-rose-300">
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+            <div className="text-xs">
+              <span className="font-bold">Gedung Serbaguna (GSG) Tutup pada Hari {getDayOfWeek(selectedDate)} (Akhir Pekan).</span>
+              <p className="text-rose-300/80 mt-0.5">Seluruh ruangan SG 01-12 dan Lab Komputer tidak beroperasi pada hari Sabtu dan Minggu. Pelayanan perkuliahan dan peminjaman dibuka kembali Senin s.d. Jumat.</p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-white/10 text-white border border-white/10">

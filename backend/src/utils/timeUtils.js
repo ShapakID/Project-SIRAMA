@@ -20,7 +20,7 @@ function getWitaTimeHM() {
 }
 
 function getDayOfWeek(dateStr) {
-  if (!dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') {
     return DAY_NAMES[getWitaDate().getDay()];
   }
   const parts = dateStr.split('-');
@@ -32,7 +32,7 @@ function getDayOfWeek(dateStr) {
     return DAY_NAMES[dateObj.getDay()];
   }
   const fallback = new Date(dateStr);
-  return DAY_NAMES[fallback.getDay()];
+  return isNaN(fallback.getDay()) ? DAY_NAMES[getWitaDate().getDay()] : DAY_NAMES[fallback.getDay()];
 }
 
 function parseNimMetadata(nim) {
@@ -64,11 +64,33 @@ function parseNimMetadata(nim) {
   };
 }
 
+function isWeekend(dateStr) {
+  const day = getDayOfWeek(dateStr);
+  return day === 'SABTU' || day === 'MINGGU';
+}
+
+function getNextWeekdayYMD(dateStr) {
+  const base = dateStr ? new Date(dateStr) : getWitaDate();
+  const day = base.getDay();
+  // 0 is Sunday, 6 is Saturday
+  if (day === 6) {
+    base.setDate(base.getDate() + 2); // Saturday -> Monday
+  } else if (day === 0) {
+    base.setDate(base.getDate() + 1); // Sunday -> Monday
+  }
+  const y = base.getFullYear();
+  const m = String(base.getMonth() + 1).padStart(2, '0');
+  const d = String(base.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 module.exports = {
   DAY_NAMES,
   getWitaDate,
   getWitaDateYMD,
   getWitaTimeHM,
   getDayOfWeek,
+  isWeekend,
+  getNextWeekdayYMD,
   parseNimMetadata
 };

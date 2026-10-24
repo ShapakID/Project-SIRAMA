@@ -5,7 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "test": "node tests/task1_schema.test.js && node tests/task2_excel_parser.test.js && node tests/task3_auth.test.js && node tests/task4_availability.test.js && node tests/task5_practicum.test.js && node tests/task6_projector_reports.test.js && node tests/floor_rooms.test.js && node tests/projector_history.test.js && node tests/kbm_and_purposes.test.js",
+    "test": "node tests/task1_schema.test.js && node tests/task2_excel_parser.test.js && node tests/task3_auth.test.js && node tests/task4_availability.test.js && node tests/task5_practicum.test.js && node tests/task6_projector_reports.test.js && node tests/floor_rooms.test.js && node tests/projector_history.test.js && node tests/kbm_and_purposes.test.js && node tests/weekend_and_curriculum.test.js",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js"
   },
