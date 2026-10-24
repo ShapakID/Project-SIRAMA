@@ -112,7 +112,7 @@ async function borrowProjector({ projectorCode, reservationId, borrowerName, bor
     where: { code: reservation.roomCode }
   });
   if (room && room.building !== projector.building) {
-    const err = new Error(`Ruangan ${room.name} berada di ${room.building === 'JTI' ? 'Gedung JTI' : 'Gedung GSG'}. Tidak dapat meminjam proyektor milik ${projector.building === 'JTI' ? 'Gedung JTI' : 'Gedung GSG'}.`);
+    const err = new Error(`Ruangan ${room.name} berada di ${room.building === 'JTI' ? 'JTI' : 'SG'}. Tidak dapat meminjam proyektor milik ${projector.building === 'JTI' ? 'JTI' : 'SG'}.`);
     err.status = 400;
     throw err;
   }

@@ -93,7 +93,7 @@ export default function PetugasDashboard({ currentUser }) {
         method: 'POST'
       });
       if (!res.ok) throw new Error('Gagal membatalkan reservasi');
-      setMessage({ text: 'Reservasi berhasil dibatalkan oleh Petugas GSG.', type: 'success' });
+      setMessage({ text: 'Reservasi berhasil dibatalkan oleh Petugas.', type: 'success' });
       loadData();
     } catch (err) {
       setMessage({ text: err.message, type: 'error' });
@@ -119,10 +119,10 @@ export default function PetugasDashboard({ currentUser }) {
         <div>
           <span className="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full glass-pill text-emerald-300 border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse"></span>
-            Petugas Fasilitas GSG FT-UNTAD
+            Petugas Fasilitas SG & JTI FT-UNTAD
           </span>
-          <h2 className="text-xl font-semibold text-white tracking-tight mt-2.5">Pusat Kendali Petugas GSG</h2>
-          <p className="text-xs text-zinc-400 mt-0.5">Pemantauan reservasi ruangan GSG (SG 01 - SG 12), otoritas serah-terima unit proyektor, dan penanganan fasilitas.</p>
+          <h2 className="text-xl font-semibold text-white tracking-tight mt-2.5">Pusat Kendali Petugas</h2>
+          <p className="text-xs text-zinc-400 mt-0.5">Pemantauan reservasi ruangan SG & JTI, otoritas serah-terima unit proyektor, dan penanganan fasilitas.</p>
         </div>
         <button
           onClick={loadData}
@@ -133,7 +133,7 @@ export default function PetugasDashboard({ currentUser }) {
         </button>
       </div>
 
-      {/* SECTION: Monitoring Reservasi Ruangan GSG (Fokus Utama Petugas) */}
+      {/* SECTION: Monitoring Reservasi Ruangan (Fokus Utama Petugas) */}
       <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div className="flex items-center gap-2.5">
@@ -141,10 +141,10 @@ export default function PetugasDashboard({ currentUser }) {
             <div>
               <h3 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
                 <Eye className="w-4 h-4 text-cyan-400" />
-                Pantauan Reservasi Ruangan GSG
+                Pantauan Reservasi Ruangan SG & JTI
               </h3>
               <p className="text-xs text-zinc-400">
-                Memantau siapa yang memesan/menggunakan ruangan GSG (Lantai 1 & 2), mata kuliah, dan status reservasi.
+                Memantau siapa yang memesan/menggunakan ruangan SG & JTI, mata kuliah, dan status reservasi.
               </p>
             </div>
           </div>
@@ -182,13 +182,13 @@ export default function PetugasDashboard({ currentUser }) {
         <div className="overflow-x-auto">
           {reservations.length === 0 ? (
             <div className="text-center py-10 text-zinc-500 text-xs font-mono">
-              Belum ada riwayat reservasi praktikum yang tercatat di GSG.
+              Belum ada riwayat reservasi yang tercatat.
             </div>
           ) : (
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-white/10 text-zinc-400 font-mono">
-                  <th className="py-2.5 px-3">Ruang GSG</th>
+                  <th className="py-2.5 px-3">Ruangan</th>
                   <th className="py-2.5 px-3">Kategori & Kegiatan</th>
                   <th className="py-2.5 px-3">Alasan / Tujuan</th>
                   <th className="py-2.5 px-3">Pemohon (PJ Kelas)</th>
@@ -272,13 +272,13 @@ export default function PetugasDashboard({ currentUser }) {
         </div>
       </div>
 
-      {/* Grid Status 11 Unit Proyektor */}
+      {/* Grid Status Unit Proyektor */}
       <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
             <h3 className="text-base font-semibold text-white tracking-tight">
-              Status 11 Unit Proyektor GSG & Audit Trail
+              Status Unit Proyektor & Audit Trail
             </h3>
           </div>
           <span className="text-[11px] text-zinc-400 font-mono">
@@ -315,7 +315,7 @@ export default function PetugasDashboard({ currentUser }) {
                       <div className="text-zinc-400 font-mono">{p.currentLoan.roomCode}</div>
                     </div>
                   ) : (
-                    <div className="text-[11px] text-zinc-400 mt-1">{p.brand || 'GSG Standard'}</div>
+                    <div className="text-[11px] text-zinc-400 mt-1">{p.brand || 'Standard'}</div>
                   )}
                 </div>
 
@@ -478,10 +478,10 @@ export default function PetugasDashboard({ currentUser }) {
                 <div className="flex items-center gap-2.5">
                   <span className="font-mono font-bold text-xl text-white">Unit {selectedProjectorLog.code}</span>
                   <span className="text-xs px-2.5 py-0.5 rounded-full font-mono bg-zinc-800 text-zinc-300 border border-white/10">
-                    {selectedProjectorLog.brand || 'GSG Standard'}
+                    {selectedProjectorLog.brand || 'Standard'}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">Riwayat Log & Audit Penggunaan Proyektor GSG</p>
+                <p className="text-xs text-zinc-400 mt-1">Riwayat Log & Audit Penggunaan Proyektor</p>
               </div>
 
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
@@ -502,7 +502,7 @@ export default function PetugasDashboard({ currentUser }) {
                   ? 'SEDANG TERPAKAI'
                   : selectedProjectorLog.status === 'BROKEN'
                   ? 'UNIT RUSAK'
-                  : 'TERSEDIA DI GSG'}
+                  : 'TERSEDIA'}
               </span>
             </div>
 

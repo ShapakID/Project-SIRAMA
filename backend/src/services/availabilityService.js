@@ -165,7 +165,7 @@ async function getFloorRoomsStatus(dateStr, building = 'GSG') {
     }
 
     const bld = r.building || (r.code.startsWith('JTI') || r.code === 'Lab-JTI' ? 'JTI' : 'GSG');
-    const closedText = bld === 'JTI' ? 'Gedung JTI Tutup (Akhir Pekan)' : 'Gedung GSG Tutup (Akhir Pekan)';
+    const closedText = bld === 'JTI' ? 'Gedung JTI Tutup (Akhir Pekan)' : 'Gedung SG Tutup (Akhir Pekan)';
 
     if (isWknd) {
       results.push({

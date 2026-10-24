@@ -107,7 +107,7 @@ export default function RoomTimetable({ onSelectSlot }) {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
               <h2 className="text-lg font-semibold text-white tracking-tight">
-                Jadwal & Ketersediaan Ruangan GSG
+                Jadwal & Ketersediaan Ruangan SG & JTI
               </h2>
             </div>
             <p className="text-xs text-zinc-400 mt-1">

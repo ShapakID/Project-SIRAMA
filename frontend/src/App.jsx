@@ -116,7 +116,7 @@ export default function App() {
         body: JSON.stringify(reportData)
       });
       if (!res.ok) throw new Error('Gagal mengirim laporan');
-      setReportSuccess('Laporan berhasil dikirim ke Petugas GSG.');
+      setReportSuccess('Laporan berhasil dikirim ke Petugas Fasilitas SG & JTI.');
       setTimeout(() => {
         setReportSuccess('');
         setReportModalOpen(false);
@@ -137,24 +137,7 @@ export default function App() {
         onOpenReportModal={() => setReportModalOpen(true)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-        {/* Banner Informasional Hero Once UI Style */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-          <div className="relative z-10 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-cyan-300 text-xs font-mono mb-4 border border-cyan-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse"></span>
-              SG & JTI FT-UNTAD ACADEMIC PLATFORM
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white leading-tight">
-              Sistem Informasi Reservasi & Fasilitas
-            </h2>
-            <p className="mt-2.5 text-sm text-zinc-400 leading-relaxed max-w-2xl">
-              Gedung SG & JTI Fakultas Teknik Universitas Tadulako. Peminjaman ruangan praktikum anti-bentrok berbasis transaksi atomik dan manajemen unit proyektor tanpa kunci fisik, terintegrasi sinkron jadwal SIGA.
-            </p>
-          </div>
-        </div>
-
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
         {/* Content based on Active Tab */}
         {activeTab === 'denah' && (
           <GSGFloorPlan
@@ -209,12 +192,12 @@ export default function App() {
             <PetugasDashboard currentUser={currentUser} />
           ) : (
             <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-white/10 text-center shadow-xl shadow-black/40">
-              <p className="text-sm text-zinc-300">Silakan masuk sebagai Petugas GSG untuk mengakses panel kendali inventaris.</p>
+              <p className="text-sm text-zinc-300">Silakan masuk sebagai Petugas untuk mengakses panel kendali inventaris.</p>
               <button
                 onClick={() => setLoginModalOpen(true)}
                 className="mt-4 px-5 py-2 bg-white text-zinc-950 hover:bg-zinc-200 rounded-full text-xs font-semibold transition-all shadow-md"
               >
-                Login Petugas GSG
+                Login Petugas
               </button>
             </div>
           )
@@ -226,7 +209,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
           <div className="glass-modal rounded-3xl max-w-sm w-full p-6 sm:p-7 text-zinc-100">
             <h3 className="text-lg font-semibold text-white tracking-tight">Login Sistem SIRAMA</h3>
-            <p className="text-xs text-zinc-400 mt-1">Gunakan NIM (PJ Kelas) atau Username (Petugas GSG)</p>
+            <p className="text-xs text-zinc-400 mt-1">Gunakan NIM (PJ Kelas) atau Username (Petugas)</p>
 
             {loginError && (
               <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
@@ -285,9 +268,9 @@ export default function App() {
           <div className="glass-modal rounded-3xl max-w-md w-full p-6 sm:p-7 text-zinc-100">
             <h3 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-rose-400" />
-              Lapor Kerusakan Fasilitas GSG
+              Lapor Kerusakan Fasilitas
             </h3>
-            <p className="text-xs text-zinc-400 mt-1">Laporan publik langsung diteruskan ke Petugas GSG FT-UNTAD</p>
+            <p className="text-xs text-zinc-400 mt-1">Laporan publik langsung diteruskan ke Petugas Fasilitas SG & JTI</p>
 
             {reportSuccess ? (
               <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-300 text-xs flex items-center gap-2.5">
@@ -304,7 +287,7 @@ export default function App() {
                       onChange={(e) => setReportData({ ...reportData, targetType: e.target.value })}
                       className="w-full px-3 py-2 glass-input rounded-xl text-xs focus:outline-none"
                     >
-                      <option value="ROOM" className="bg-zinc-900 text-white">Ruangan GSG</option>
+                      <option value="ROOM" className="bg-zinc-900 text-white">Ruangan (SG / JTI)</option>
                       <option value="PROJECTOR" className="bg-zinc-900 text-white">Unit Proyektor</option>
                       <option value="GENERAL_FACILITY" className="bg-zinc-900 text-white">Fasilitas Umum</option>
                     </select>

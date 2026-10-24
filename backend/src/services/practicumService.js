@@ -15,7 +15,7 @@ async function saveDraft(data) {
   const { id, pjNim, pjName, roomCode, date, startTime, endTime, title, category, purpose } = data;
 
   if (date && isWeekend(date)) {
-    const err = new Error('Gedung GSG tutup pada hari Sabtu dan Minggu. Silakan pilih hari operasional Senin - Jumat.');
+    const err = new Error('Gedung SG & JTI tutup pada hari Sabtu dan Minggu. Silakan pilih hari operasional Senin - Jumat.');
     err.status = 400;
     err.statusCode = 400;
     throw err;
@@ -77,7 +77,7 @@ async function publishReservation(reservationId) {
     }
 
     if (isWeekend(reservation.date)) {
-      const err = new Error('Gedung GSG tutup pada hari Sabtu dan Minggu. Silakan pilih hari operasional Senin - Jumat.');
+      const err = new Error('Gedung SG & JTI tutup pada hari Sabtu dan Minggu. Silakan pilih hari operasional Senin - Jumat.');
       err.status = 400;
       throw err;
     }

@@ -322,9 +322,9 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
             {/* Pemilihan Ruangan: Langsung dari Denah, Tanpa Dropdown List */}
             <div>
               <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan Terpilih</label>
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-950/80 border border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-zinc-950/80 border border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-bold font-mono text-sm shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                  <div className="px-3 py-1.5 min-w-[3.5rem] rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-bold font-mono text-xs sm:text-sm whitespace-nowrap shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
                     {formData.roomCode}
                   </div>
                   <div>
@@ -345,9 +345,9 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
                 <button
                   type="button"
                   onClick={onNavigateToFloorPlan}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-medium bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl text-xs font-medium bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
                 >
-                  <Layers className="w-3.5 h-3.5" />
+                  <Layers className="w-3.5 h-3.5 shrink-0" />
                   <span>Pilih dari Denah</span>
                 </button>
               </div>
@@ -461,7 +461,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
               </div>
             )}
 
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
               <button
                 type="button"
                 disabled={isWeekend(formData.date)}
@@ -492,13 +492,13 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
       </div>
 
       {/* Tabel Daftar Reservasi PJ */}
-      <div className="glass-panel rounded-3xl border border-white/10 p-6 sm:p-7 shadow-xl space-y-4">
+      <div className="glass-panel rounded-3xl border border-white/10 p-4 sm:p-7 shadow-xl space-y-4">
         <h3 className="text-base font-semibold text-white tracking-tight">Daftar Reservasi Anda</h3>
         {reservations.length === 0 ? (
           <p className="text-xs text-zinc-500">Belum ada reservasi dibuat.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-zinc-300">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left text-xs text-zinc-300 min-w-[640px]">
               <thead className="bg-zinc-900/60 text-zinc-400 uppercase font-mono text-[11px] border-b border-white/10">
                 <tr>
                   <th className="px-4 py-3">Ruang</th>

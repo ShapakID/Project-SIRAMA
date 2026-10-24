@@ -34,7 +34,7 @@ async function runTests() {
   const weekendStatus = await getFloorRoomsStatus('2026-10-24');
   assert.ok(weekendStatus.length > 0);
   assert.strictEqual(weekendStatus[0].summaryStatus, 'CLOSED');
-  assert.strictEqual(weekendStatus[0].activeSchedule, 'Gedung GSG Tutup (Akhir Pekan)');
+  assert.strictEqual(weekendStatus[0].activeSchedule, 'Gedung SG Tutup (Akhir Pekan)');
   assert.strictEqual(weekendStatus[0].isClosed, true);
 
   // Test 4: Practicum reservation on weekend MUST BE REJECTED (Throws Error 400)
@@ -52,7 +52,7 @@ async function runTests() {
       title: 'Praktikum Akhir Pekan Coba-Coba'
     });
   } catch (err) {
-    if (err.statusCode === 400 && err.message.includes('Gedung GSG tutup pada hari Sabtu dan Minggu')) {
+    if (err.statusCode === 400 && err.message.includes('tutup pada hari Sabtu dan Minggu')) {
       draftWeekendRejected = true;
     }
   }
@@ -69,7 +69,7 @@ async function runTests() {
       title: 'Praktikum Minggu Coba-Coba'
     });
   } catch (err) {
-    if (err.statusCode === 400 && err.message.includes('Gedung GSG tutup pada hari Sabtu dan Minggu')) {
+    if (err.statusCode === 400 && err.message.includes('tutup pada hari Sabtu dan Minggu')) {
       directWeekendRejected = true;
     }
   }

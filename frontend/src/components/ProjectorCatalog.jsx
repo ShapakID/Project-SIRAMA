@@ -114,7 +114,7 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
                     <div className="text-zinc-400 font-mono">{p.currentLoan.roomCode}</div>
                   </div>
                 ) : (
-                  <div className="text-[11px] text-zinc-400 mt-1">{p.brand || 'GSG Standard'}</div>
+                  <div className="text-[11px] text-zinc-400 mt-1">{p.brand || (selectedBuilding === 'JTI' ? 'JTI Standard' : 'SG Standard')}</div>
                 )}
               </div>
 
@@ -150,10 +150,10 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
                 <div className="flex items-center gap-2.5">
                   <span className="font-mono font-bold text-xl text-white">Unit {selectedProjector.code}</span>
                   <span className="text-xs px-2.5 py-0.5 rounded-full font-mono bg-zinc-800 text-zinc-300 border border-white/10">
-                    {selectedProjector.brand || 'GSG Standard'}
+                    {selectedProjector.brand || (selectedProjector.building === 'JTI' ? 'JTI Standard' : 'SG Standard')}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">Riwayat Log & Audit Penggunaan Proyektor GSG</p>
+                <p className="text-xs text-zinc-400 mt-1">Riwayat Log & Audit Penggunaan Proyektor {selectedProjector.building === 'JTI' ? 'JTI' : 'SG'}</p>
               </div>
 
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
@@ -174,7 +174,7 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
                   ? 'SEDANG TERPAKAI'
                   : selectedProjector.status === 'BROKEN'
                   ? 'UNIT RUSAK'
-                  : 'TERSEDIA DI GSG'}
+                  : 'TERSEDIA'}
               </span>
             </div>
 

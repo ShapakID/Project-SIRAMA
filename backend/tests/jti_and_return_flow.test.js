@@ -77,7 +77,7 @@ async function runJtiAndReturnFlowTests() {
     });
   } catch (err) {
     crossFailed1 = true;
-    assert.ok(err.message.includes('Gedung JTI'), 'Error should specify building mismatch');
+    assert.ok(err.message.includes('JTI'), 'Error should specify building mismatch');
   }
   assert.ok(crossFailed1, 'GSG room must not be allowed to borrow JTI projector');
 
@@ -92,7 +92,7 @@ async function runJtiAndReturnFlowTests() {
     });
   } catch (err) {
     crossFailed2 = true;
-    assert.ok(err.message.includes('Gedung GSG') || err.message.includes('Gedung JTI'));
+    assert.ok(err.message.includes('SG') || err.message.includes('JTI'));
   }
   assert.ok(crossFailed2, 'JTI room must not be allowed to borrow GSG projector');
 

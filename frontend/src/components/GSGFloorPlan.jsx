@@ -426,7 +426,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
           {/* Spatial Map Header (Ujung Belakang / Dalam) */}
           <div className="text-center mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider text-zinc-400 border border-white/5 bg-zinc-950/40">
-              <span>Sisi Belakang GSG (Taman Dalam / Dinding Belakang)</span>
+              <span>Sisi Belakang {selectedBuilding === 'GSG' ? 'SG' : 'JTI'} (Taman / Dinding Luar)</span>
             </div>
           </div>
 
@@ -588,7 +588,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
                 {currentUser?.role === 'PETUGAS' && (
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-cyan-300">
                     <Shield className="w-3.5 h-3.5 text-cyan-400" />
-                    Mode Monitoring Petugas GSG
+                    Mode Monitoring Petugas
                   </span>
                 )}
               </div>
