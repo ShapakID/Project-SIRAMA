@@ -245,7 +245,7 @@ export default function PJDashboard({ currentUser }) {
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, category: 'PRAKTIKUM', title: formData.title.includes('Praktikum') ? formData.title : 'Praktikum Rekayasa Perangkat Lunak' })}
+                  onClick={() => setFormData(prev => ({ ...prev, category: 'PRAKTIKUM', title: 'Praktikum Rekayasa Perangkat Lunak' }))}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
                     formData.category === 'PRAKTIKUM'
                       ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-semibold'
@@ -256,7 +256,7 @@ export default function PJDashboard({ currentUser }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, category: 'HIMA_ORMAWA', title: 'Rapat / Kegiatan HIMA SIFOR' })}
+                  onClick={() => setFormData(prev => ({ ...prev, category: 'HIMA_ORMAWA', title: 'Rapat / Kegiatan HIMA SIFOR' }))}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
                     formData.category === 'HIMA_ORMAWA'
                       ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-semibold'
@@ -267,7 +267,7 @@ export default function PJDashboard({ currentUser }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, category: 'LAINNYA', title: 'Kegiatan Lainnya' })}
+                  onClick={() => setFormData(prev => ({ ...prev, category: 'LAINNYA', title: 'Kegiatan Lainnya' }))}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
                     formData.category === 'LAINNYA'
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold'
@@ -284,7 +284,7 @@ export default function PJDashboard({ currentUser }) {
                 <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan GSG</label>
                 <select
                   value={formData.roomCode}
-                  onChange={(e) => setFormData({ ...formData, roomCode: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, roomCode: e.target.value }))}
                   className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 >
                   {ROOM_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -296,7 +296,7 @@ export default function PJDashboard({ currentUser }) {
                 <input
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                   className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
@@ -308,7 +308,7 @@ export default function PJDashboard({ currentUser }) {
                 <input
                   type="time"
                   value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
                   className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
@@ -318,7 +318,7 @@ export default function PJDashboard({ currentUser }) {
                 <input
                   type="time"
                   value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
                   className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
@@ -342,7 +342,7 @@ export default function PJDashboard({ currentUser }) {
                     : 'Contoh: Persiapan Lomba Hackathon Kampus'
                 }
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
               />
             </div>
@@ -367,7 +367,7 @@ export default function PJDashboard({ currentUser }) {
                     : 'Catatan tambahan (opsional)...'
                 }
                 value={formData.purpose}
-                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
                 className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400 resize-none"
               />
             </div>
