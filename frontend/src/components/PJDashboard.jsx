@@ -66,12 +66,6 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
       if (resPracticum.ok) {
         const pData = await resPracticum.json();
         setReservations(pData);
-        if (pData.length > 0 && !selectedLoan.reservationId) {
-          const published = pData.find(r => r.status === 'PUBLISHED');
-          if (published) {
-            setSelectedLoan(prev => ({ ...prev, reservationId: published.id }));
-          }
-        }
       }
       if (resProjector.ok) {
         const prData = await resProjector.json();
