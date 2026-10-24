@@ -189,11 +189,11 @@ export default function PetugasDashboard({ currentUser }) {
               <thead>
                 <tr className="border-b border-white/10 text-zinc-400 font-mono">
                   <th className="py-2.5 px-3">Ruang GSG</th>
-                  <th className="py-2.5 px-3">Mata Kuliah / Keperluan</th>
+                  <th className="py-2.5 px-3">Kategori & Kegiatan</th>
+                  <th className="py-2.5 px-3">Alasan / Tujuan</th>
                   <th className="py-2.5 px-3">Pemohon (PJ Kelas)</th>
-                  <th className="py-2.5 px-3">Waktu Pelaksanaan</th>
+                  <th className="py-2.5 px-3">Waktu (WITA)</th>
                   <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3">Catatan</th>
                   <th className="py-2.5 px-3 text-right">Aksi Petugas</th>
                 </tr>
               </thead>
@@ -208,7 +208,25 @@ export default function PetugasDashboard({ currentUser }) {
                         </span>
                       </td>
                       <td className="py-3 px-3">
-                        <div className="font-medium text-white">{r.courseName}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {r.category === 'HIMA_ORMAWA' ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                              HIMA
+                            </span>
+                          ) : r.category === 'LAINNYA' ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              Lainnya
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                              Praktikum
+                            </span>
+                          )}
+                          <span className="font-medium text-white">{r.title || r.courseName}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-zinc-300 text-[11px] max-w-xs truncate" title={r.purpose || ''}>
+                        {r.purpose || r.notes || '-'}
                       </td>
                       <td className="py-3 px-3">
                         <div className="text-white font-medium">{r.pjName || 'PJ Mahasiswa'}</div>

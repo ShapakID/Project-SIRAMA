@@ -11,13 +11,16 @@ function isOverlap(startA, endA, startB, endB) {
 }
 
 async function saveDraft(data) {
-  const { id, pjNim, pjName, roomCode, date, startTime, endTime, title } = data;
+  const { id, pjNim, pjName, roomCode, date, startTime, endTime, title, category, purpose } = data;
 
   if (startTime && endTime && timeToMinutes(startTime) >= timeToMinutes(endTime)) {
     const err = new Error('Invalid timeslot: startTime must be before endTime');
     err.status = 400;
     throw err;
   }
+
+  const reservationCategory = category || 'PRAKTIKUM';
+  const reservationPurpose = purpose || null;
 
   if (id) {
     return await prisma.practicumReservation.update({
@@ -28,6 +31,8 @@ async function saveDraft(data) {
         startTime,
         endTime,
         title,
+        category: reservationCategory,
+        purpose: reservationPurpose,
         status: 'DRAFT',
         pjNim: pjNim || 'F5212510018',
         pjName: pjName || 'PJ'
@@ -42,6 +47,8 @@ async function saveDraft(data) {
       startTime,
       endTime,
       title,
+      category: reservationCategory,
+      purpose: reservationPurpose,
       status: 'DRAFT',
       pjNim: pjNim || 'F5212510018',
       pjName: pjName || 'PJ'

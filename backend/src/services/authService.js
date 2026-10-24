@@ -1,4 +1,5 @@
 const prisma = require('../db');
+const { parseNimMetadata } = require('../utils/timeUtils');
 
 async function loginUser(nim, password) {
   if (!nim) {
@@ -18,6 +19,7 @@ async function loginUser(nim, password) {
   }
 
   const token = `token_${user.id}_${user.role}`;
+  const classMeta = user.role === 'PJ' ? parseNimMetadata(user.nim) : null;
 
   return {
     token,
@@ -25,7 +27,8 @@ async function loginUser(nim, password) {
       id: user.id,
       nim: user.nim,
       name: user.name,
-      role: user.role
+      role: user.role,
+      classMeta
     }
   };
 }
@@ -39,11 +42,13 @@ async function getUserFromToken(token) {
       where: { id: userId }
     });
     if (user) {
+      const classMeta = user.role === 'PJ' ? parseNimMetadata(user.nim) : null;
       return {
         id: user.id,
         nim: user.nim,
         name: user.name,
-        role: user.role
+        role: user.role,
+        classMeta
       };
     }
   }

@@ -65,6 +65,8 @@ model PracticumReservation {
   status    String   @default("DRAFT") // "DRAFT", "PUBLISHED", "CANCELLED"
   pjNim     String
   pjName    String
+  category  String   @default("PRAKTIKUM") // "PRAKTIKUM", "HIMA_ORMAWA", "LAINNYA"
+  purpose   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

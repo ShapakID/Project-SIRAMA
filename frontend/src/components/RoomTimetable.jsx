@@ -35,6 +35,23 @@ export default function RoomTimetable({ onSelectSlot }) {
   }, [selectedRoom, selectedDate]);
 
   const getStatusBadge = (slot) => {
+    if (slot.category === 'HIMA_ORMAWA') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+          Kegiatan HIMA
+        </span>
+      );
+    }
+    if (slot.category === 'LAINNYA') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          Kegiatan Lainnya
+        </span>
+      );
+    }
+
     switch (slot.status) {
       case 'AVAILABLE':
         return (
@@ -47,14 +64,14 @@ export default function RoomTimetable({ onSelectSlot }) {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-            Kuliah SIGA
+            Kuliah SIGA (WITA)
           </span>
         );
       case 'OCCUPIED_PRACTICUM':
       case 'PRACTICUM':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
             Praktikum Terjadwal
           </span>
         );
@@ -177,6 +194,11 @@ export default function RoomTimetable({ onSelectSlot }) {
                   {(slot.lecturer || slot.pjName) && (
                     <p className="text-xs text-zinc-400">
                       Penanggung Jawab / Dosen: <span className="font-medium text-zinc-200">{slot.lecturer || slot.pjName}</span>
+                    </p>
+                  )}
+                  {slot.purpose && (
+                    <p className="text-xs text-purple-300/90 font-mono">
+                      Tujuan / Alasan: <span className="text-zinc-300 font-sans">{slot.purpose}</span>
                     </p>
                   )}
                   {slot.notes && (

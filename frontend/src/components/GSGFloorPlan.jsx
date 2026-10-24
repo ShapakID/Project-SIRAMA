@@ -14,16 +14,23 @@ import {
   Shield,
   X
 } from 'lucide-react';
+import { getWitaDateYMD, getWitaTimeHM } from '../utils/timeUtils';
 
 export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTimetable }) {
   const [selectedFloor, setSelectedFloor] = useState(1);
-  const [selectedDate, setSelectedDate] = useState(() => {
-    return new Date().toISOString().split('T')[0];
-  });
+  const [selectedDate, setSelectedDate] = useState(() => getWitaDateYMD());
+  const [currentTimeWita, setCurrentTimeWita] = useState(() => getWitaTimeHM());
   const [roomsData, setRoomsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeRoomModal, setActiveRoomModal] = useState(null);
   const [filterEmptyNow, setFilterEmptyNow] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeWita(getWitaTimeHM());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     fetchFloorStatus();
@@ -114,8 +121,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
 
   const checkIsOccupiedNow = (room) => {
     if (!room || !room.slots || room.slots.length === 0) return false;
-    const now = new Date();
-    const currentHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentHM = currentTimeWita || getWitaTimeHM();
     return room.slots.some((s) => {
       if (s.status === 'AVAILABLE') return false;
       return s.startTime <= currentHM && s.endTime >= currentHM;
@@ -229,6 +235,12 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
 
           {/* Controls: Date Picker, Floor Selector & Kosong Sekarang Toggle */}
           <div className="flex flex-wrap items-center gap-3">
+            {/* WITA Time indicator badge */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-cyan-500/20 bg-cyan-950/30 text-cyan-300 text-xs font-mono">
+              <Clock className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{currentTimeWita} WITA</span>
+            </div>
+
             {/* Quick Filter: Ruang Kosong Jam Ini */}
             <button
               onClick={() => setFilterEmptyNow(!filterEmptyNow)}

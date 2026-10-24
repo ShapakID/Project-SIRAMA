@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Tv, PlusCircle, CheckCircle, AlertCircle, RefreshCw, Send, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Tv, PlusCircle, CheckCircle, AlertCircle, RefreshCw, Send, Trash2, Tag, FileText } from 'lucide-react';
+import { getWitaDateYMD, parseNimMetadata } from '../utils/timeUtils';
 
 const ROOM_OPTIONS = ['SG-1', 'SG-2', 'SG-3', 'SG-4', 'SG-5', 'SG-6', 'SG-7', 'SG-8', 'SG-9', 'SG-10', 'SG-11', 'Lab-Komputer'];
 
@@ -9,18 +10,23 @@ export default function PJDashboard({ currentUser }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
+  const classMeta = parseNimMetadata(currentUser?.nim);
+  const pjClassTitle = classMeta ? classMeta.className : 'SI-A 2025';
+
   // Form states
   const [formData, setFormData] = useState({
     roomCode: 'SG-7',
-    date: new Date().toISOString().split('T')[0],
+    date: getWitaDateYMD(),
     startTime: '10:00',
     endTime: '12:00',
-    title: 'Praktikum Rekayasa Perangkat Lunak'
+    category: 'PRAKTIKUM',
+    title: 'Praktikum Rekayasa Perangkat Lunak',
+    purpose: ''
   });
 
   const [overrideData, setOverrideData] = useState({
     roomCode: 'SG-7',
-    date: new Date().toISOString().split('T')[0],
+    date: getWitaDateYMD(),
     startTime: '08:00',
     endTime: '10:00',
     reason: 'Perkuliahan dilaksanakan secara Daring (Online)'
@@ -91,6 +97,9 @@ export default function PJDashboard({ currentUser }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          userId: currentUser.id,
+          pjNim: currentUser.nim,
+          pjName: currentUser.name,
           organizerNim: currentUser.nim,
           organizerName: currentUser.name
         })
@@ -202,7 +211,7 @@ export default function PJDashboard({ currentUser }) {
         <div>
           <span className="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full glass-pill text-amber-300 border border-amber-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-            PJ Kelas Aktif (SI-A 2025)
+            PJ Kelas Aktif ({pjClassTitle})
           </span>
           <h2 className="text-xl font-semibold text-white tracking-tight mt-2.5">{currentUser.name}</h2>
           <p className="text-xs text-zinc-400 font-mono mt-0.5">NIM: {currentUser.nim} • Jurusan Teknologi Informasi</p>
@@ -217,19 +226,59 @@ export default function PJDashboard({ currentUser }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Kolom Kiri: Reservasi Praktikum */}
+        {/* Kolom Kiri: Reservasi Praktikum & Kegiatan Organisasi */}
         <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
           <div className="border-b border-white/10 pb-4">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
               <h3 className="text-base font-semibold text-white tracking-tight">
-                Buat Jadwal Praktikum Baru
+                Reservasi Ruangan (Praktikum / HIMA / Lainnya)
               </h3>
             </div>
-            <p className="text-xs text-zinc-400 mt-1">Reservasi langsung sah saat diterbitkan jika tidak terjadi bentrok.</p>
+            <p className="text-xs text-zinc-400 mt-1">Dukungan kegiatan perkuliahan, organisasi HIMA Untad, atau kegiatan lainnya.</p>
           </div>
 
           <div className="space-y-4">
+            {/* Opsi Kategori Reservasi */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Tujuan / Kategori Reservasi</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, category: 'PRAKTIKUM', title: formData.title.includes('Praktikum') ? formData.title : 'Praktikum Rekayasa Perangkat Lunak' })}
+                  className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
+                    formData.category === 'PRAKTIKUM'
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-semibold'
+                      : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:text-zinc-200'
+                  }`}
+                >
+                  Praktikum
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, category: 'HIMA_ORMAWA', title: 'Rapat / Kegiatan HIMA SIFOR' })}
+                  className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
+                    formData.category === 'HIMA_ORMAWA'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-semibold'
+                      : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:text-zinc-200'
+                  }`}
+                >
+                  HIMA / Ormawa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, category: 'LAINNYA', title: 'Kegiatan Lainnya' })}
+                  className={`py-2 px-2.5 rounded-xl border text-xs font-medium transition cursor-pointer text-center ${
+                    formData.category === 'LAINNYA'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-semibold'
+                      : 'bg-zinc-950/60 text-zinc-400 border-white/10 hover:text-zinc-200'
+                  }`}
+                >
+                  Lainnya
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-zinc-300 mb-1.5">Ruangan GSG</label>
@@ -255,7 +304,7 @@ export default function PJDashboard({ currentUser }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Mulai</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Mulai (WITA)</label>
                 <input
                   type="time"
                   value={formData.startTime}
@@ -265,7 +314,7 @@ export default function PJDashboard({ currentUser }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Selesai</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jam Selesai (WITA)</label>
                 <input
                   type="time"
                   value={formData.endTime}
@@ -276,13 +325,50 @@ export default function PJDashboard({ currentUser }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Nama Praktikum & Modul</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                {formData.category === 'PRAKTIKUM'
+                  ? 'Nama Praktikum & Modul'
+                  : formData.category === 'HIMA_ORMAWA'
+                  ? 'Nama Kegiatan / Divisi HIMA'
+                  : 'Nama Acara / Kegiatan'}
+              </label>
               <input
                 type="text"
-                placeholder="Contoh: Praktikum RPL - Modul 2 UML & Activity Diagram"
+                placeholder={
+                  formData.category === 'PRAKTIKUM'
+                    ? 'Contoh: Praktikum RPL - Modul 2 UML & Activity Diagram'
+                    : formData.category === 'HIMA_ORMAWA'
+                    ? 'Contoh: Rapat Kerja HIMA SIFOR - Panitia Dies Natalis'
+                    : 'Contoh: Persiapan Lomba Hackathon Kampus'
+                }
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+
+            {/* Kolom Alasan / Deskripsi Tujuan Reservasi */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-zinc-300">
+                  Alasan / Keterangan Reservasi
+                </label>
+                {formData.category !== 'PRAKTIKUM' && (
+                  <span className="text-[10px] text-amber-400 font-mono">Wajib diisi</span>
+                )}
+              </div>
+              <textarea
+                rows={2}
+                placeholder={
+                  formData.category === 'HIMA_ORMAWA'
+                    ? 'Tulis alasan penggunaan ruangan oleh HIMA/Ormawa...'
+                    : formData.category === 'LAINNYA'
+                    ? 'Tulis alasan dan keperluan kegiatan di GSG...'
+                    : 'Catatan tambahan (opsional)...'
+                }
+                value={formData.purpose}
+                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-400 resize-none"
               />
             </div>
 
@@ -447,8 +533,9 @@ export default function PJDashboard({ currentUser }) {
                 <tr>
                   <th className="px-4 py-3">Ruang</th>
                   <th className="px-4 py-3">Tanggal</th>
-                  <th className="px-4 py-3">Waktu</th>
-                  <th className="px-4 py-3">Mata Kuliah / Modul</th>
+                  <th className="px-4 py-3">Waktu (WITA)</th>
+                  <th className="px-4 py-3">Kategori & Kegiatan</th>
+                  <th className="px-4 py-3">Alasan / Tujuan</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Aksi</th>
                 </tr>
@@ -459,7 +546,27 @@ export default function PJDashboard({ currentUser }) {
                     <td className="px-4 py-3 font-semibold text-white">{item.roomCode}</td>
                     <td className="px-4 py-3 text-zinc-400 font-mono">{item.date}</td>
                     <td className="px-4 py-3 font-mono text-zinc-300">{item.startTime} - {item.endTime}</td>
-                    <td className="px-4 py-3 font-medium text-zinc-200">{item.title}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {item.category === 'HIMA_ORMAWA' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            HIMA
+                          </span>
+                        ) : item.category === 'LAINNYA' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Lainnya
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                            Praktikum
+                          </span>
+                        )}
+                        <span className="font-medium text-zinc-200">{item.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-400 max-w-[200px] truncate" title={item.purpose || ''}>
+                      {item.purpose || '-'}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] border ${
                         item.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :

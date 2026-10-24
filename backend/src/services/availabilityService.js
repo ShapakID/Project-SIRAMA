@@ -1,12 +1,6 @@
 const prisma = require('../db');
 const { parseScheduleExcel } = require('./excelParser');
-
-const DAY_NAMES = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-
-function getDayOfWeek(dateStr) {
-  const d = new Date(dateStr);
-  return DAY_NAMES[d.getDay()];
-}
+const { getDayOfWeek, getWitaDateYMD } = require('../utils/timeUtils');
 
 async function importSchedulesFromExcel(filePath) {
   const parsed = parseScheduleExcel(filePath);
@@ -119,6 +113,8 @@ async function getRoomAvailability(roomCode, dateStr) {
       type: 'PRACTICUM',
       id: p.id,
       title: p.title,
+      category: p.category || 'PRAKTIKUM',
+      purpose: p.purpose || null,
       pjName: p.pjName,
       pjNim: p.pjNim,
       startTime: p.startTime,
@@ -159,8 +155,9 @@ async function getFloorRoomsStatus(dateStr) {
       activeSchedule = 'Perbaikan Fasilitas';
     } else if (slots.some(s => s.status === 'PRACTICUM')) {
       const p = slots.find(s => s.status === 'PRACTICUM');
+      const catPrefix = p.category === 'HIMA_ORMAWA' ? '[HIMA] ' : (p.category === 'LAINNYA' ? '[Kegiatan] ' : '[Praktikum] ');
       summaryStatus = 'PRACTICUM';
-      activeSchedule = `${p.title} (${p.startTime}-${p.endTime})`;
+      activeSchedule = `${catPrefix}${p.title} (${p.startTime}-${p.endTime})`;
     } else if (slots.some(s => s.status === 'OCCUPIED_CLASS')) {
       const c = slots.find(s => s.status === 'OCCUPIED_CLASS');
       summaryStatus = 'OCCUPIED';

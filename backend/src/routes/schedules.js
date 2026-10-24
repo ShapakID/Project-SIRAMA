@@ -7,6 +7,7 @@ const {
   importSchedulesFromExcel,
   getFloorRoomsStatus
 } = require('../services/availabilityService');
+const { getWitaDateYMD } = require('../utils/timeUtils');
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ router.get('/rooms', async (req, res) => {
 // Get floor rooms status for 2D floor plan
 router.get('/floor-status', async (req, res) => {
   try {
-    const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+    const dateStr = req.query.date || getWitaDateYMD();
     const data = await getFloorRoomsStatus(dateStr);
     res.json(data);
   } catch (err) {

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/tests/app_build.test.js && node src/tests/dashboard_integration.test.js && node src/tests/floor_plan.test.js && node src/tests/feature2_and_3.test.js"
+    "test": "node src/tests/app_build.test.js && node src/tests/dashboard_integration.test.js && node src/tests/floor_plan.test.js && node src/tests/feature2_and_3.test.js && node src/tests/wita_and_categories.test.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
