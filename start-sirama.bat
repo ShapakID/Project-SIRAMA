@@ -16,7 +16,7 @@ start "SIRAMA-Frontend-3000" cmd /k "cd /d %~dp0frontend && npm run dev"
 timeout /t 3 /nobreak >nul
 
 echo Menjalankan Public Tunnel (Ngrok)...
-start "SIRAMA-Ngrok-Public" cmd /k "ngrok http 3000"
+start "SIRAMA-Ngrok-Public" cmd /k "ngrok http 4000"
 
 echo.
 echo Layanan SIRAMA berhasil dijalankan:
