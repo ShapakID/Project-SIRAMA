@@ -4,6 +4,8 @@ const prisma = require('../db');
 const {
   getRoomAvailability,
   applyOverride,
+  applyClassOverride,
+  getClassSchedules,
   importSchedulesFromExcel,
   getFloorRoomsStatus
 } = require('../services/availabilityService');
@@ -98,6 +100,75 @@ router.post('/override', async (req, res) => {
     res.json(override);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Get list of available classes for timetable selector
+router.get('/classes', async (req, res) => {
+  try {
+    const schedules = await prisma.weeklySchedule.findMany({
+      select: { courseName: true }
+    });
+    const classSet = new Set();
+    schedules.forEach(s => {
+      const match = s.courseName.match(/\((SI-[A-C]\s*\d{4})\)/i);
+      if (match) {
+        classSet.add(match[1].replace(/\s+/, ' '));
+      }
+    });
+    const classes = Array.from(classSet).sort();
+    res.json(classes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get class schedule Monday-Friday with overrides
+router.get('/by-class', async (req, res) => {
+  try {
+    const className = req.query.className || 'SI-A 2025';
+    const dateStr = req.query.date || getWitaDateYMD();
+    const data = await getClassSchedules(className, dateStr);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PJ action: Online / Move Room / Move Time / Reset
+router.post('/class-override', async (req, res) => {
+  try {
+    const {
+      courseName,
+      roomCode,
+      date,
+      action,
+      newRoomCode,
+      newStartTime,
+      newEndTime,
+      notes,
+      updatedBy
+    } = req.body;
+
+    if (!courseName || !date || !action) {
+      return res.status(400).json({ error: 'courseName, date, and action are required' });
+    }
+
+    const result = await applyClassOverride({
+      courseName,
+      roomCode,
+      date,
+      action,
+      newRoomCode,
+      newStartTime,
+      newEndTime,
+      notes,
+      updatedBy
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 

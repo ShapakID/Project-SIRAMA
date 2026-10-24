@@ -29,6 +29,10 @@ async function testAvailability() {
   const after = await getRoomAvailability('SG-7', dateStr);
   const releasedSlot = after.find(s => s.status === 'AVAILABLE' && s.originalStatus === 'RELEASED');
   assert(releasedSlot, 'Released class slot must become AVAILABLE');
+
+  // Clean up test override to keep database pristine
+  await prisma.scheduleOverride.deleteMany({ where: { roomCode: 'SG-7', date: dateStr } });
+
   console.log('Task 4 Availability & Override test passed.');
   await prisma.$disconnect();
 }

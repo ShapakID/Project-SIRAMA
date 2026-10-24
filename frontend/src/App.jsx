@@ -157,7 +157,7 @@ export default function App() {
         )}
 
         {activeTab === 'jadwal' && (
-          <RoomTimetable />
+          <RoomTimetable currentUser={currentUser} />
         )}
 
         {activeTab === 'proyektor' && (
