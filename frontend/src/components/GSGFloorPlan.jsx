@@ -298,7 +298,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                Gedung GSG
+                SG
               </button>
               <button
                 onClick={() => setSelectedBuilding('JTI')}
@@ -308,7 +308,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                Gedung JTI
+                JTI
               </button>
             </div>
 
@@ -403,8 +403,8 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
           <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-3 text-rose-300">
             <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
             <div className="text-xs">
-              <span className="font-bold">Gedung Serbaguna (GSG) Tutup pada Hari {getDayOfWeek(selectedDate)} (Akhir Pekan).</span>
-              <p className="text-rose-300/80 mt-0.5">Seluruh ruangan SG 01-12 dan Lab Komputer tidak beroperasi pada hari Sabtu dan Minggu. Pelayanan perkuliahan dan peminjaman dibuka kembali Senin s.d. Jumat.</p>
+              <span className="font-bold">Gedung {selectedBuilding === 'GSG' ? 'SG' : 'JTI'} Tutup pada Hari {getDayOfWeek(selectedDate)} (Akhir Pekan).</span>
+              <p className="text-rose-300/80 mt-0.5">Seluruh ruangan tidak beroperasi pada hari Sabtu dan Minggu. Pelayanan perkuliahan dan peminjaman dibuka kembali Senin s.d. Jumat.</p>
             </div>
           </div>
         )}
@@ -479,7 +479,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
                   <DoorOpen className="w-5 h-5 text-emerald-400" />
                   <div>
                     <p className="text-xs font-semibold tracking-wide text-white uppercase font-mono">
-                      Pintu Masuk Utama Gedung {selectedBuilding} FT-UNTAD
+                      Pintu Masuk Utama {selectedBuilding === 'GSG' ? 'SG' : 'JTI'} FT-UNTAD
                     </p>
                     <p className="text-[11px] text-zinc-400">Lobi Utama & Akses Masuk Mahasiswa / Dosen</p>
                   </div>

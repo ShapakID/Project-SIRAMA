@@ -45,6 +45,6 @@ assert.ok(floorPlanCode.includes("case 'CLOSED':"), 'GSGFloorPlan must handle CL
 // Test 4: Verify RoomTimetable.jsx contains weekend alert
 const timetableCode = fs.readFileSync(path.join(__dirname, '../components/RoomTimetable.jsx'), 'utf-8');
 assert.ok(timetableCode.includes('isWeekend(selectedDate)'), 'RoomTimetable must check isWeekend');
-assert.ok(timetableCode.includes('Gedung GSG Tutup (Akhir Pekan)'), 'RoomTimetable must show weekend banner');
+assert.ok(timetableCode.includes('Tutup (Akhir Pekan)'), 'RoomTimetable must show weekend banner');
 
 console.log('Frontend Curriculum & Weekend tests PASSED successfully!');

@@ -163,7 +163,7 @@ export default function RoomTimetable({ onSelectSlot }) {
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto mb-3">
               <AlertTriangle className="w-6 h-6 text-rose-400" />
             </div>
-            <p className="font-semibold text-rose-200 text-base">Gedung GSG Tutup (Akhir Pekan)</p>
+            <p className="font-semibold text-rose-200 text-base">Gedung SG & JTI Tutup (Akhir Pekan)</p>
             <p className="text-xs text-zinc-400 mt-1.5 max-w-md mx-auto">
               Hari {getDayOfWeek(selectedDate)} merupakan akhir pekan. Seluruh ruangan SG 01-12 dan Lab Komputer tidak beroperasi. Silakan pilih hari operasional Senin s.d. Jumat.
             </p>

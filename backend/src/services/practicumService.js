@@ -120,10 +120,26 @@ async function getReservations(filter = {}) {
   if (filter.status) where.status = filter.status;
   if (filter.pjNim) where.pjNim = filter.pjNim;
 
-  return await prisma.practicumReservation.findMany({
+  const items = await prisma.practicumReservation.findMany({
     where,
     orderBy: { createdAt: 'desc' }
   });
+
+  const resIds = items.map(r => r.id);
+  const activeLoans = await prisma.projectorLoan.findMany({
+    where: {
+      reservationId: { in: resIds },
+      status: 'BORROWED'
+    }
+  });
+
+  const loanMap = new Map();
+  activeLoans.forEach(l => loanMap.set(l.reservationId, l));
+
+  return items.map(r => ({
+    ...r,
+    activeLoan: loanMap.get(r.id) || null
+  }));
 }
 
 async function cancelReservation(reservationId) {

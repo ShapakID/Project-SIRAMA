@@ -53,10 +53,8 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     }
   }, [selectedCourse, formData.category]);
 
-  const [selectedLoan, setSelectedLoan] = useState({
-    reservationId: '',
-    projectorCode: ''
-  });
+  const [loanModalRes, setLoanModalRes] = useState(null);
+  const [selectedProjectorCode, setSelectedProjectorCode] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -190,85 +188,57 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     }
   };
 
-  // Published reservation selected for loan
-  const publishedReservations = reservations.filter(r => r.status === 'PUBLISHED');
-  const activeReservationForLoan = publishedReservations.find(r => r.id === selectedLoan.reservationId) || publishedReservations[0];
-
-  // Calculate H-3 distance for projector borrowing
   const todayWita = getWitaDateYMD();
-  let loanDiffDays = null;
-  let isLoanAllowed = false;
-  let loanNoticeMessage = '';
 
-  if (activeReservationForLoan) {
-    const todayD = new Date(todayWita + 'T00:00:00');
-    const resD = new Date(activeReservationForLoan.date + 'T00:00:00');
-    loanDiffDays = Math.round((resD - todayD) / (1000 * 60 * 60 * 24));
-
-    if (loanDiffDays < 0) {
-      isLoanAllowed = false;
-      loanNoticeMessage = `Tanggal reservasi (${activeReservationForLoan.date}) sudah lewat.`;
-    } else if (loanDiffDays > 3) {
-      isLoanAllowed = false;
-      loanNoticeMessage = `Peminjaman proyektor baru dapat diajukan H-3 s.d. hari H pelaksanaan. (Jadwal: ${activeReservationForLoan.date}, saat ini H-${loanDiffDays}).`;
-    } else {
-      isLoanAllowed = true;
-      loanNoticeMessage = `Jadwal memenuhi syarat peminjaman proyektor (${loanDiffDays === 0 ? 'Hari H' : `H-${loanDiffDays} hari H`}).`;
-    }
-  }
-
-  // Determine building of selected reservation to filter projectors
-  const resRoomCode = activeReservationForLoan?.roomCode || formData.roomCode;
-  const isJtiRoom = resRoomCode.startsWith('JTI') || resRoomCode === 'Lab-JTI';
-  const targetBuilding = isJtiRoom ? 'JTI' : 'GSG';
-
-  const availableProjectors = projectors.filter(p => {
-    const pBuilding = p.building || (p.code.startsWith('JTI') ? 'JTI' : 'GSG');
-    return pBuilding === targetBuilding && p.status === 'AVAILABLE';
-  });
-
-  // Ensure selected projector belongs to available list
-  useEffect(() => {
-    if (availableProjectors.length > 0) {
-      const exists = availableProjectors.some(p => p.code === selectedLoan.projectorCode);
-      if (!exists) {
-        setSelectedLoan(prev => ({ ...prev, projectorCode: availableProjectors[0].code }));
-      }
-    }
-  }, [targetBuilding, availableProjectors.length]);
+  const openLoanModal = (resItem) => {
+    setLoanModalRes(resItem);
+    const isJti = resItem.roomCode.startsWith('JTI') || resItem.roomCode === 'Lab-JTI';
+    const building = isJti ? 'JTI' : 'GSG';
+    const available = projectors.filter(p => {
+      const pB = p.building || (p.code.startsWith('JTI') ? 'JTI' : 'GSG');
+      return pB === building && p.status === 'AVAILABLE';
+    });
+    setSelectedProjectorCode(available[0]?.code || '');
+  };
 
   const handleBorrowProjector = async (e) => {
     e.preventDefault();
-    if (!activeReservationForLoan) {
-      setMessage({ text: 'Silakan pilih reservasi ruangan aktif terlebih dahulu.', type: 'error' });
+    if (!loanModalRes) return;
+
+    const todayD = new Date(todayWita + 'T00:00:00');
+    const resD = new Date(loanModalRes.date + 'T00:00:00');
+    const diffDays = Math.round((resD - todayD) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0 || diffDays > 3) {
+      setMessage({ text: 'Peminjaman proyektor hanya diizinkan H-3 s.d. hari H pelaksanaan.', type: 'error' });
       return;
     }
-    if (!isLoanAllowed) {
-      setMessage({ text: loanNoticeMessage, type: 'error' });
-      return;
-    }
-    if (!selectedLoan.projectorCode) {
+    if (!selectedProjectorCode) {
       setMessage({ text: 'Tidak ada unit proyektor tersedia.', type: 'error' });
       return;
     }
+
+    const isJti = loanModalRes.roomCode.startsWith('JTI') || loanModalRes.roomCode === 'Lab-JTI';
+    const displayBuilding = isJti ? 'JTI' : 'SG';
 
     try {
       const res = await fetch('/api/projectors/borrow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectorCode: selectedLoan.projectorCode,
-          reservationId: activeReservationForLoan.id,
+          projectorCode: selectedProjectorCode,
+          reservationId: loanModalRes.id,
           borrowerName: currentUser.name,
-          borrowerNim: currentUser.nim
+          borrowerNim: currentUser.nim,
+          roomCode: loanModalRes.roomCode
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal meminjam proyektor');
       setMessage({
-        text: `Peminjaman Unit Proyektor ${selectedLoan.projectorCode} berhasil dicatat! Ambil unit di ruang petugas ${targetBuilding}.`,
+        text: `Peminjaman Unit Proyektor ${selectedProjectorCode} berhasil dicatat! Ambil unit di ruang petugas ${displayBuilding}.`,
         type: 'success'
       });
+      setLoanModalRes(null);
       loadData();
     } catch (err) {
       setMessage({ text: err.message, type: 'error' });
@@ -310,8 +280,8 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Kolom Kiri: Form Reservasi Ruangan */}
+      <div className="max-w-3xl mx-auto w-full">
+        {/* Kolom Form Reservasi Ruangan */}
         <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-5">
           <div className="border-b border-white/10 pb-4">
             <div className="flex items-center gap-2">
@@ -369,11 +339,11 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
                         Ruang {formData.roomCode}
                       </span>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-cyan-300">
-                        {isSelectedRoomJti ? 'Gedung JTI' : 'Gedung GSG'}
+                        {isSelectedRoomJti ? 'JTI' : 'SG'}
                       </span>
                     </div>
                     <p className="text-[11px] text-zinc-400 mt-0.5">
-                      {isSelectedRoomJti ? 'Fasilitas JTI FT-Untad' : 'Fasilitas GSG FT-Untad'}
+                      {isSelectedRoomJti ? 'Fasilitas JTI FT-Untad' : 'Fasilitas SG FT-Untad'}
                     </p>
                   </div>
                 </div>
@@ -525,109 +495,6 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
             </div>
           </div>
         </div>
-
-        {/* Kolom Kanan: Peminjaman Proyektor (Hanya Setelah Ada Ruangan & Dekat Hari H) */}
-        <div className="glass-panel p-6 sm:p-7 rounded-3xl border border-white/10 shadow-xl space-y-4">
-          <div className="border-b border-white/10 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-              <h3 className="text-base font-semibold text-white tracking-tight">
-                Peminjaman Proyektor Gedung ({targetBuilding})
-              </h3>
-            </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              Peminjaman proyektor wajib terikat pada reservasi ruangan aktif dan hanya dapat dipinjam mendekati hari H (H-3 s.d. hari H).
-            </p>
-          </div>
-
-          {publishedReservations.length === 0 ? (
-            <div className="p-5 rounded-2xl bg-zinc-900/60 border border-white/10 text-center space-y-2">
-              <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto" />
-              <p className="text-xs font-semibold text-zinc-200">Belum Ada Reservasi Ruangan Terbit</p>
-              <p className="text-[11px] text-zinc-400 max-w-sm mx-auto">
-                Silakan pesan dan terbitkan reservasi ruangan terlebih dahulu di kolom sebelah kiri sebelum meminjam proyektor.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleBorrowProjector} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Pilih Reservasi Ruangan Terbit</label>
-                <select
-                  value={activeReservationForLoan?.id || ''}
-                  onChange={(e) => setSelectedLoan(prev => ({ ...prev, reservationId: e.target.value }))}
-                  className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
-                >
-                  {publishedReservations.map(r => (
-                    <option key={r.id} value={r.id}>
-                      Ruang {r.roomCode} ({r.date} {r.startTime}-{r.endTime}) • {r.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Validasi H-3 Hari H */}
-              <div className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 ${
-                isLoanAllowed
-                  ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
-                  : 'bg-amber-500/10 border-amber-500/25 text-amber-300'
-              }`}>
-                {isLoanAllowed ? (
-                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                ) : (
-                  <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <div className="font-semibold">
-                    {isLoanAllowed ? 'Siap Dipinjam' : 'Belum Memasuki Waktu Peminjaman'}
-                  </div>
-                  <p className="text-[11px] mt-0.5 leading-relaxed opacity-90">
-                    {loanNoticeMessage}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-medium text-zinc-300">
-                    Pilih Unit Proyektor Tersedia ({targetBuilding})
-                  </label>
-                  <span className="text-[10px] text-zinc-400 font-mono">
-                    {availableProjectors.length} unit siap
-                  </span>
-                </div>
-                {availableProjectors.length === 0 ? (
-                  <div className="p-3 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-400">
-                    Semua unit proyektor di {targetBuilding} sedang terpakai atau tidak tersedia.
-                  </div>
-                ) : (
-                  <select
-                    value={selectedLoan.projectorCode}
-                    onChange={(e) => setSelectedLoan(prev => ({ ...prev, projectorCode: e.target.value }))}
-                    className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
-                  >
-                    {availableProjectors.map(p => (
-                      <option key={p.code} value={p.code}>
-                        Unit {p.code} ({p.brand || targetBuilding})
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={!isLoanAllowed || availableProjectors.length === 0}
-                className={`w-full py-2.5 text-xs font-semibold rounded-xl transition ${
-                  !isLoanAllowed || availableProjectors.length === 0
-                    ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border border-white/5'
-                    : 'bg-cyan-500 hover:bg-cyan-400 text-zinc-950 shadow-[0_0_15px_rgba(6,182,212,0.25)] cursor-pointer'
-                }`}
-              >
-                Pinjam Unit Proyektor
-              </button>
-            </form>
-          )}
-        </div>
       </div>
 
       {/* Tabel Daftar Reservasi PJ */}
@@ -682,19 +549,35 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
                         {item.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right space-x-2">
+                    <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                       {item.status === 'DRAFT' && (
                         <button
                           onClick={() => handlePublish(item.id)}
-                          className="px-3 py-1 bg-emerald-500 text-zinc-950 font-semibold rounded-lg hover:bg-emerald-400 transition"
+                          className="px-3 py-1 bg-emerald-500 text-zinc-950 font-semibold rounded-lg hover:bg-emerald-400 transition cursor-pointer"
                         >
                           Terbitkan
                         </button>
                       )}
+                      {item.status === 'PUBLISHED' && (
+                        item.activeLoan ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                            <Tv className="w-3 h-3 text-cyan-400" />
+                            Unit {item.activeLoan.projectorCode}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => openLoanModal(item)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-medium transition cursor-pointer"
+                          >
+                            <Tv className="w-3.5 h-3.5" />
+                            Pinjam Proyektor
+                          </button>
+                        )
+                      )}
                       {item.status !== 'CANCELLED' && item.status !== 'COMPLETED' && (
                         <button
                           onClick={() => handleCancel(item.id)}
-                          className="px-3 py-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          className="px-3 py-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
                         >
                           Batal
                         </button>
@@ -707,6 +590,137 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
           </div>
         )}
       </div>
+
+      {/* Modal Peminjaman Proyektor Terikat Reservasi */}
+      {loanModalRes && (() => {
+        const todayD = new Date(todayWita + 'T00:00:00');
+        const resD = new Date(loanModalRes.date + 'T00:00:00');
+        const diffDays = Math.round((resD - todayD) / (1000 * 60 * 60 * 24));
+        const isAllowed = diffDays >= 0 && diffDays <= 3;
+        const isJti = loanModalRes.roomCode.startsWith('JTI') || loanModalRes.roomCode === 'Lab-JTI';
+        const displayBld = isJti ? 'JTI' : 'SG';
+        const targetBld = isJti ? 'JTI' : 'GSG';
+        const availableUnits = projectors.filter(p => {
+          const pB = p.building || (p.code.startsWith('JTI') ? 'JTI' : 'GSG');
+          return pB === targetBld && p.status === 'AVAILABLE';
+        });
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="glass-modal max-w-md w-full p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <Tv className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-sm font-semibold text-white tracking-tight">
+                    Peminjaman Proyektor {displayBld}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setLoanModalRes(null)}
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Info Reservasi Terkait */}
+              <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-white/10 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Ruangan:</span>
+                  <span className="font-semibold text-white font-mono">{loanModalRes.roomCode} ({displayBld})</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Jadwal:</span>
+                  <span className="font-mono text-cyan-300">{loanModalRes.date} • {loanModalRes.startTime}-{loanModalRes.endTime} WITA</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Kegiatan:</span>
+                  <span className="text-zinc-200 truncate max-w-[200px]">{loanModalRes.title}</span>
+                </div>
+              </div>
+
+              {/* Status Validasi H-3 */}
+              <div className={`p-3 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                isAllowed
+                  ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                  : 'bg-amber-500/10 border-amber-500/25 text-amber-300'
+              }`}>
+                {isAllowed ? (
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <div className="font-semibold">
+                    {isAllowed ? 'Siap Dipinjam' : 'Belum Memasuki Waktu Pinjam'}
+                  </div>
+                  <p className="text-[11px] mt-0.5 leading-relaxed opacity-90">
+                    {diffDays < 0
+                      ? `Tanggal reservasi sudah lewat.`
+                      : diffDays > 3
+                      ? `Peminjaman proyektor dibuka H-3 s.d. hari H (Jadwal: ${loanModalRes.date}, saat ini H-${diffDays}).`
+                      : `Reservasi ini memenuhi syarat (${diffDays === 0 ? 'Hari H' : `H-${diffDays}`}). Silakan pilih unit.`}
+                  </p>
+                </div>
+              </div>
+
+              {isAllowed ? (
+                <form onSubmit={handleBorrowProjector} className="space-y-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                      Pilih Unit Proyektor {displayBld} ({availableUnits.length} unit tersedia)
+                    </label>
+                    {availableUnits.length === 0 ? (
+                      <p className="text-xs text-rose-300 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
+                        Seluruh proyektor {displayBld} sedang terpakai saat ini.
+                      </p>
+                    ) : (
+                      <select
+                        value={selectedProjectorCode}
+                        onChange={(e) => setSelectedProjectorCode(e.target.value)}
+                        className="w-full px-3 py-2 bg-zinc-950/80 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
+                      >
+                        {availableUnits.map(p => (
+                          <option key={p.code} value={p.code}>
+                            Unit {p.code} ({displayBld}) • Siap Pakai
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setLoanModalRes(null)}
+                      className="px-3.5 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-white transition cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={availableUnits.length === 0}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-zinc-950 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_12px_rgba(6,182,212,0.3)] cursor-pointer"
+                    >
+                      Konfirmasi Pinjam
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setLoanModalRes(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-medium bg-zinc-800 text-zinc-300 hover:text-white transition cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

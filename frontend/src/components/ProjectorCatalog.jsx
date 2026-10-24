@@ -35,15 +35,15 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-            <span className="text-xs font-mono text-cyan-300 uppercase tracking-wider">Live Inventory {selectedBuilding}</span>
+            <span className="text-xs font-mono text-cyan-300 uppercase tracking-wider">Live Inventory {selectedBuilding === 'GSG' ? 'SG' : 'JTI'}</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
-            Katalog & Status Unit Proyektor Gedung {selectedBuilding}
+            Katalog & Status Unit Proyektor {selectedBuilding === 'GSG' ? 'SG' : 'JTI'}
           </h3>
           <p className="text-xs text-zinc-400 mt-1.5 max-w-xl leading-relaxed">
             {selectedBuilding === 'GSG'
-              ? 'Pantauan live keterpakaian 11 unit proyektor GSG FT-UNTAD (Unit 01 s.d. 11). Klik masing-masing unit untuk melihat riwayat log audit dan peminjam terkini.'
-              : 'Pantauan live keterpakaian 3 unit proyektor khusus Gedung JTI FT-UNTAD (JTI-01 s.d. JTI-03). Klik masing-masing unit untuk melihat riwayat peminjam.'}
+              ? 'Pantauan live keterpakaian 11 unit proyektor SG FT-UNTAD (Unit 01 s.d. 11). Klik masing-masing unit untuk melihat riwayat log audit dan peminjam terkini.'
+              : 'Pantauan live keterpakaian 3 unit proyektor khusus JTI FT-UNTAD (JTI-01 s.d. JTI-03). Klik masing-masing unit untuk melihat riwayat peminjam.'}
           </p>
         </div>
 
@@ -58,7 +58,7 @@ export default function ProjectorCatalog({ onOpenLogin, currentUser }) {
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              GSG (11 Unit)
+              SG (11 Unit)
             </button>
             <button
               onClick={() => setSelectedBuilding('JTI')}

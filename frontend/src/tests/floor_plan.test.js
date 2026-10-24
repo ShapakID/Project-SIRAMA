@@ -15,7 +15,7 @@ const content = fs.readFileSync(floorPlanPath, 'utf8');
 // Check Floor 1 layout definition
 assert(content.includes("'SG 03', 'SG 02', 'SG 01'"), 'Floor 1 left column must be SG 03, SG 02, SG 01');
 assert(content.includes("'SG 06', 'SG 05', 'SG 04'"), 'Floor 1 right column must be SG 06, SG 05, SG 04');
-assert(content.includes('Pintu Masuk Utama Gedung'), 'Floor 1 must feature Pintu Masuk');
+assert(content.includes('Pintu Masuk Utama'), 'Floor 1 must feature Pintu Masuk');
 
 // Check Floor 2 layout definition
 assert(content.includes("'SG 09', 'SG 08', 'SG 07'"), 'Floor 2 left column must be SG 09, SG 08, SG 07');

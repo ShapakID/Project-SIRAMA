@@ -144,13 +144,13 @@ export default function App() {
           <div className="relative z-10 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-cyan-300 text-xs font-mono mb-4 border border-cyan-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse"></span>
-              GSG FT-UNTAD ACADEMIC PLATFORM
+              SG & JTI FT-UNTAD ACADEMIC PLATFORM
             </div>
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white leading-tight">
               Sistem Informasi Reservasi & Fasilitas
             </h2>
             <p className="mt-2.5 text-sm text-zinc-400 leading-relaxed max-w-2xl">
-              Gedung Serbaguna Fakultas Teknik Universitas Tadulako. Peminjaman ruangan praktikum anti-bentrok berbasis transaksi atomik dan manajemen unit proyektor tanpa kunci fisik, terintegrasi sinkron jadwal SIGA.
+              Gedung SG & JTI Fakultas Teknik Universitas Tadulako. Peminjaman ruangan praktikum anti-bentrok berbasis transaksi atomik dan manajemen unit proyektor tanpa kunci fisik, terintegrasi sinkron jadwal SIGA.
             </p>
           </div>
         </div>
