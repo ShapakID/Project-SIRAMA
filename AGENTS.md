@@ -44,9 +44,15 @@ Fokus sistem: penguncian hak pakai ruangan secara anti-bentrok dan pelacakan uni
    - Petugas: Default akun petugas (`petugas` / `petugas123`). Mengelola ketersediaan unit proyektor, mencatat serah-terima/pengembalian fisik, serta memantau dan memperbarui status laporan kerusakan.
 
    ## Deployment & Remote Operation Runbook
+   - **Remote Windows Host (Laptop Lama)**:
+     - Hostname: `desktop-7suo2te`
+     - LAN IP: `192.168.100.10`
+     - Tailscale IP: `100.121.52.93` (Account: `shafairunizarne@`)
+     - SSH: `Administrator@100.121.52.93` atau `Administrator@192.168.100.10`
+     - Working dir: `C:\Users\Administrator\Desktop\Project`
    1. **Sync Source Code**:
-    - Transfer file project (tanpa `node_modules` dan `.git`) dari laptop lokal ke remote:
-      `scp -i ~/.ssh/id_ed25519 -r <files> Administrator@192.168.100.10:C:/Users/Administrator/Desktop/Project/` atau menggunakan bundel tarball.
+    - Transfer file project menggunakan git bundle atau SSH:
+      `git bundle create sirama.bundle HEAD && scp sirama.bundle Administrator@100.121.52.93:C:/Users/Administrator/sirama.bundle`
    2. **Backend Setup**:
     - `cd C:\Users\Administrator\Desktop\Project\backend`
     - `npm install`
