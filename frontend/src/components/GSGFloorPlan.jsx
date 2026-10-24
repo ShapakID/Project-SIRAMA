@@ -274,10 +274,10 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 mb-3">
               <Layers className="w-3.5 h-3.5" />
-              Visual Denah Arsitektural Gedung {selectedBuilding} (FT-UNTAD)
+              Visual Denah Arsitektural {selectedBuilding === 'GSG' ? 'SG' : 'JTI'} (FT-UNTAD)
             </div>
             <h2 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
-              Denah Lantai Gedung {selectedBuilding}
+              Denah Lantai {selectedBuilding === 'GSG' ? 'SG' : 'JTI'}
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl">
               {selectedBuilding === 'GSG'
@@ -418,7 +418,7 @@ export default function GSGFloorPlan({ currentUser, onSelectRoom, onNavigateToTi
               {selectedFloor === 1 ? 'Zona Dasar (Akses Pintu Masuk)' : 'Zona Atas (Ruang SG 07-11 & Lab Komputer)'}
             </span>
           </div>
-          <span className="text-xs font-mono text-zinc-400">GEDUNG SERBAGUNA FT-UNTAD</span>
+          <span className="text-xs font-mono text-zinc-400">{selectedBuilding === 'GSG' ? 'GEDUNG SG FT-UNTAD' : 'GEDUNG JTI FT-UNTAD'}</span>
         </div>
 
         {/* Blueprint Layout Grid: 2 Columns + Center Hallway */}
