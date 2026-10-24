@@ -138,10 +138,15 @@ async function getRoomAvailability(roomCode, dateStr) {
   return slots;
 }
 
-async function getFloorRoomsStatus(dateStr) {
+async function getFloorRoomsStatus(dateStr, building = 'GSG') {
   const isWknd = isWeekend(dateStr);
+  const where = { isActive: true };
+  if (building && building !== 'ALL') {
+    where.building = building;
+  }
+
   const rooms = await prisma.room.findMany({
-    where: { isActive: true },
+    where,
     orderBy: { code: 'asc' }
   });
 
@@ -153,7 +158,14 @@ async function getFloorRoomsStatus(dateStr) {
       displayCode = `SG ${match[1].padStart(2, '0')}`;
     } else if (r.code === 'Lab-Komputer') {
       displayCode = 'Lab-Komputer';
+    } else if (r.code.startsWith('JTI-')) {
+      displayCode = r.code.replace('JTI-', 'JTI ');
+    } else if (r.code === 'Lab-JTI') {
+      displayCode = 'Lab Komputer JTI';
     }
+
+    const bld = r.building || (r.code.startsWith('JTI') || r.code === 'Lab-JTI' ? 'JTI' : 'GSG');
+    const closedText = bld === 'JTI' ? 'Gedung JTI Tutup (Akhir Pekan)' : 'Gedung GSG Tutup (Akhir Pekan)';
 
     if (isWknd) {
       results.push({
@@ -161,11 +173,12 @@ async function getFloorRoomsStatus(dateStr) {
         code: r.code,
         displayCode,
         name: r.name,
+        building: bld,
         floor: r.floor,
         capacity: r.capacity,
         facilities: r.facilities,
         summaryStatus: 'CLOSED',
-        activeSchedule: 'Gedung GSG Tutup (Akhir Pekan)',
+        activeSchedule: closedText,
         isClosed: true,
         slotsCount: 0,
         slots: []
@@ -196,11 +209,13 @@ async function getFloorRoomsStatus(dateStr) {
       code: r.code,
       displayCode,
       name: r.name,
+      building: bld,
       floor: r.floor,
       capacity: r.capacity,
       facilities: r.facilities,
       summaryStatus,
       activeSchedule,
+      isClosed: false,
       slotsCount: slots.length,
       slots
     });

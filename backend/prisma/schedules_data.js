@@ -3,13 +3,14 @@
 
 const MASTER_SCHEDULES = [
   // --- ANGKATAN 2025 (SEMESTER 3) ---
-  // SI-A 2025 (Sesuai SIGA Excel asli + jadwal tambahan)
+  // SI-A 2025 (Sesuai SIGA Excel asli: AI di JTI-1, Karakter & Tata Kelola di JTI-2, KSI di SG-7, RPL di SG-3, Binggris di SG-5)
+  { dayOfWeek: 'SENIN', startTime: '07:30', endTime: '10:00', courseName: 'Kecerdasan Artifisial (SI-A 2025)', sks: 4, roomCode: 'JTI-1', lecturer: 'Anita Ahmad Kasim, S.Kom., M.Cs.' },
   { dayOfWeek: 'SENIN', startTime: '13:00', endTime: '15:30', courseName: 'Keamanan Sistem Informasi (SI-A 2025)', sks: 4, roomCode: 'SG-7', lecturer: 'Rizka Ardiansyah, S.Kom., M.Kom.' },
   { dayOfWeek: 'SELASA', startTime: '13:00', endTime: '15:30', courseName: 'Analisis & Perancangan SI (SI-A 2025)', sks: 4, roomCode: 'SG-6', lecturer: 'Syahrullah, M.Kom.' },
-  { dayOfWeek: 'KAMIS', startTime: '13:00', endTime: '14:20', courseName: 'Bahasa Inggris (SI-A 2025)', sks: 2, roomCode: 'SG-5', lecturer: 'Oktaviani, S.Pd., M.Pd.' },
-  { dayOfWeek: 'SENIN', startTime: '07:30', endTime: '10:00', courseName: 'Kecerdasan Artifisial (SI-A 2025)', sks: 4, roomCode: 'SG-1', lecturer: 'Anita Ahmad Kasim, S.Kom., M.Cs.' },
   { dayOfWeek: 'RABU', startTime: '10:00', endTime: '12:30', courseName: 'Rekayasa Perangkat Lunak (SI-A 2025)', sks: 4, roomCode: 'SG-3', lecturer: 'Anita Ahmad Kasim, S.Kom., M.Cs.' },
-  { dayOfWeek: 'JUMAT', startTime: '07:30', endTime: '10:00', courseName: 'Tata Kelola TI (SI-A 2025)', sks: 4, roomCode: 'SG-2', lecturer: 'Hariyanto, S.Kom., M.Cs.' },
+  { dayOfWeek: 'KAMIS', startTime: '13:00', endTime: '14:20', courseName: 'Bahasa Inggris (SI-A 2025)', sks: 2, roomCode: 'SG-5', lecturer: 'Oktaviani, S.Pd., M.Pd.' },
+  { dayOfWeek: 'KAMIS', startTime: '14:20', endTime: '16:50', courseName: 'Pendidikan Karakter (SI-A 2025)', sks: 3, roomCode: 'JTI-2', lecturer: 'Dr. H. Rusdi, M.Pd.' },
+  { dayOfWeek: 'JUMAT', startTime: '07:30', endTime: '10:00', courseName: 'Tata Kelola TI (SI-A 2025)', sks: 4, roomCode: 'JTI-2', lecturer: 'Hariyanto, S.Kom., M.Cs.' },
 
   // SI-B 2025 (Sem 3)
   { dayOfWeek: 'SENIN', startTime: '07:30', endTime: '10:00', courseName: 'Keamanan Sistem Informasi (SI-B 2025)', sks: 4, roomCode: 'SG-2', lecturer: 'Rizka Ardiansyah, S.Kom., M.Kom.' },

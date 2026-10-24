@@ -18,8 +18,9 @@ model User {
 
 model Room {
   id         String   @id @default(cuid())
-  code       String   @unique // e.g. "SG-1" to "SG-11", "Lab-Komputer"
+  code       String   @unique // e.g. "SG-1" to "SG-11", "Lab-Komputer", "JTI-1", "Lab-JTI", "JTI-2", "JTI-3"
   name       String
+  building   String   @default("GSG") // "GSG", "JTI"
   floor      Int      @default(1)
   capacity   Int      @default(40)
   facilities String?
@@ -73,7 +74,8 @@ model PracticumReservation {
 
 model Projector {
   id        String   @id @default(cuid())
-  code      String   @unique // "01", "02", ..., "11"
+  code      String   @unique // "01", ..., "11", "JTI-01", "JTI-02", "JTI-03"
+  building  String   @default("GSG") // "GSG", "JTI"
   status    String   @default("AVAILABLE") // "AVAILABLE", "IN_USE", "BROKEN"
   notes     String?
   createdAt DateTime @default(now())

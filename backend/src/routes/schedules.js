@@ -25,8 +25,42 @@ router.get('/rooms', async (req, res) => {
 router.get('/floor-status', async (req, res) => {
   try {
     const dateStr = req.query.date || getWitaDateYMD();
-    const data = await getFloorRoomsStatus(dateStr);
+    const building = req.query.building || 'GSG';
+    const data = await getFloorRoomsStatus(dateStr, building);
     res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all weekly schedules & published reservations for Course Matrix & Live Room Detector
+router.get('/courses-matrix', async (req, res) => {
+  try {
+    const weeklySchedules = await prisma.weeklySchedule.findMany({
+      include: {
+        room: true
+      },
+      orderBy: [
+        { dayOfWeek: 'asc' },
+        { startTime: 'asc' }
+      ]
+    });
+
+    const publishedReservations = await prisma.practicumReservation.findMany({
+      where: { status: 'PUBLISHED' },
+      include: {
+        room: true
+      },
+      orderBy: [
+        { date: 'asc' },
+        { startTime: 'asc' }
+      ]
+    });
+
+    res.json({
+      weeklySchedules,
+      publishedReservations
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -32,14 +32,14 @@ async function runTests() {
   assert.strictEqual(pjC.semester, 5);
 
   // 3. Test Automatic KBM Occupancy on SENIN (Monday)
-  // SG-1 on SENIN has 'Kecerdasan Artifisial (SI-A 2025)' 07:30-10:00
+  // SG-1 on SENIN has 'Kecerdasan Artifisial (SI-B 2025)' 10:15-12:45
   const mondayDate = '2026-10-26'; // Monday
   const slotsSG1 = await getRoomAvailability('SG-1', mondayDate);
   const kbmSlot = slotsSG1.find(s => s.courseName && s.courseName.includes('Kecerdasan Artifisial'));
   assert.ok(kbmSlot, 'SG-1 on Monday must automatically contain KBM class');
   assert.strictEqual(kbmSlot.status, 'OCCUPIED_CLASS');
-  assert.strictEqual(kbmSlot.startTime, '07:30');
-  assert.strictEqual(kbmSlot.endTime, '10:00');
+  assert.strictEqual(kbmSlot.startTime, '10:15');
+  assert.strictEqual(kbmSlot.endTime, '12:45');
 
   // Check Floor Status summary for Monday
   const floorStatus = await getFloorRoomsStatus(mondayDate);
@@ -51,8 +51,8 @@ async function runTests() {
   const conflictDraft = await saveDraft({
     roomCode: 'SG-1',
     date: mondayDate,
-    startTime: '08:00',
-    endTime: '09:30',
+    startTime: '10:30',
+    endTime: '12:00',
     title: 'Bentrok Test Booking',
     category: 'PRAKTIKUM',
     pjNim: 'F5212510018',

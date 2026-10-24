@@ -1,7 +1,13 @@
 const prisma = require('../db');
 
-async function getProjectors() {
+async function getProjectors(building = 'GSG') {
+  const where = {};
+  if (building && building !== 'ALL') {
+    where.building = building;
+  }
+
   const projectors = await prisma.projector.findMany({
+    where,
     orderBy: { code: 'asc' }
   });
 
@@ -83,6 +89,16 @@ async function borrowProjector({ projectorCode, reservationId, borrowerName, bor
     throw err;
   }
 
+  // Validate building match between room and projector
+  const room = await prisma.room.findUnique({
+    where: { code: reservation.roomCode }
+  });
+  if (room && room.building !== projector.building) {
+    const err = new Error(`Ruangan ${room.name} berada di ${room.building === 'JTI' ? 'Gedung JTI' : 'Gedung GSG'}. Tidak dapat meminjam proyektor milik ${projector.building === 'JTI' ? 'Gedung JTI' : 'Gedung GSG'}.`);
+    err.status = 400;
+    throw err;
+  }
+
   if (projector.status !== 'AVAILABLE') {
     const err = new Error(`Projector unit ${projectorCode} is currently ${projector.status}`);
     err.status = 400;
@@ -109,7 +125,7 @@ async function borrowProjector({ projectorCode, reservationId, borrowerName, bor
   return loan;
 }
 
-async function returnProjector(loanId, conditionNotes, isDamaged = false) {
+async function returnProjector(loanId, conditionNotes, isDamaged = false, releaseReservation = true) {
   const loan = await prisma.projectorLoan.findUnique({
     where: { id: loanId }
   });
@@ -142,7 +158,35 @@ async function returnProjector(loanId, conditionNotes, isDamaged = false) {
     data: { status: markedBroken ? 'BROKEN' : 'AVAILABLE' }
   });
 
-  return updatedLoan;
+  // Release linked reservation if requested (default: true)
+  let reservationReleased = false;
+  if (releaseReservation && loan.reservationId) {
+    await prisma.practicumReservation.update({
+      where: { id: loan.reservationId },
+      data: { status: 'COMPLETED' }
+    });
+    reservationReleased = true;
+  }
+
+  return {
+    ...updatedLoan,
+    reservationReleased
+  };
+}
+
+async function returnProjectorByCode(projectorCode, conditionNotes, isDamaged = false, releaseReservation = true) {
+  const activeLoan = await prisma.projectorLoan.findFirst({
+    where: { projectorCode, status: 'BORROWED' },
+    orderBy: { borrowedAt: 'desc' }
+  });
+
+  if (!activeLoan) {
+    const err = new Error(`Tidak ditemukan peminjaman aktif untuk unit proyektor ${projectorCode}`);
+    err.status = 404;
+    throw err;
+  }
+
+  return await returnProjector(activeLoan.id, conditionNotes, isDamaged, releaseReservation);
 }
 
 async function getLoans(status) {
@@ -159,5 +203,6 @@ module.exports = {
   getProjectorHistory,
   borrowProjector,
   returnProjector,
+  returnProjectorByCode,
   getLoans
 };
