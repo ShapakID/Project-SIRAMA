@@ -6,6 +6,7 @@ const {
   cancelReservation
 } = require('../services/practicumService');
 const { getCoursesBySemester, getCoursesByNim } = require('../utils/curriculum');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -32,16 +33,21 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/draft', async (req, res) => {
+router.post('/draft', requireAuth, async (req, res) => {
   try {
-    const item = await saveDraft(req.body);
+    const payload = {
+      ...req.body,
+      pjNim: req.user.role === 'PJ' ? req.user.nim : (req.body.pjNim || req.user.nim),
+      pjName: req.user.role === 'PJ' ? req.user.name : (req.body.pjName || req.user.name)
+    };
+    const item = await saveDraft(payload);
     res.json(item);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-router.post('/:id/publish', async (req, res) => {
+router.post('/:id/publish', requireAuth, async (req, res) => {
   try {
     const item = await publishReservation(req.params.id);
     res.json(item);
@@ -51,7 +57,7 @@ router.post('/:id/publish', async (req, res) => {
   }
 });
 
-router.post('/:id/cancel', async (req, res) => {
+router.post('/:id/cancel', requireAuth, async (req, res) => {
   try {
     const item = await cancelReservation(req.params.id);
     res.json(item);

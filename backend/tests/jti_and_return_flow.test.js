@@ -8,9 +8,11 @@ const {
   returnProjectorByCode
 } = require('../src/services/projectorService');
 const { createReservationDirect } = require('../src/services/practicumService');
+const { getWitaDateYMD } = require('../src/utils/timeUtils');
 
 async function runJtiAndReturnFlowTests() {
   console.log('Testing JTI Building Isolation & Projector Return Flow with Room Release...');
+  const testDate = getWitaDateYMD();
 
   // Pre-cleanup any leftover test reservations
   await prisma.practicumReservation.deleteMany({
@@ -46,7 +48,7 @@ async function runJtiAndReturnFlowTests() {
   // Create a reservation in GSG room (SG-10) and JTI room (JTI-3)
   const gsgRes = await createReservationDirect({
     roomCode: 'SG-10',
-    date: '2026-10-27',
+    date: testDate,
     startTime: '10:00',
     endTime: '12:00',
     title: 'Praktikum GSG Testing Cross-Building',
@@ -57,7 +59,7 @@ async function runJtiAndReturnFlowTests() {
 
   const jtiRes = await createReservationDirect({
     roomCode: 'JTI-3',
-    date: '2026-10-27',
+    date: testDate,
     startTime: '10:00',
     endTime: '12:00',
     title: 'Praktikum JTI Testing Cross-Building',
@@ -152,7 +154,7 @@ async function runJtiAndReturnFlowTests() {
   assert.strictEqual(resAfterReturn.status, 'COMPLETED');
 
   // Room JTI-3 should now be free from this reservation in getRoomAvailability!
-  const slotsJTI3 = await getRoomAvailability('JTI-3', '2026-10-27');
+  const slotsJTI3 = await getRoomAvailability('JTI-3', testDate);
   const stillOccupied = slotsJTI3.some(s => s.id === jtiRes.id);
   assert.strictEqual(stillOccupied, false, 'Completed reservation must no longer occupy the room slot');
 

@@ -60,7 +60,7 @@ export default function PetugasDashboard({ currentUser }) {
     try {
       const res = await fetch(`/api/projectors/loans/${returnLoanId}/return`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({ conditionNotes })
       });
       if (!res.ok) throw new Error('Gagal mencatat pengembalian proyektor');
@@ -76,7 +76,7 @@ export default function PetugasDashboard({ currentUser }) {
     try {
       const res = await fetch(`/api/reports/${reportId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({ status })
       });
       if (!res.ok) throw new Error('Gagal mengubah status laporan');

@@ -87,7 +87,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     try {
       const res = await fetch('/api/practicum/draft', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({
           ...formData,
           userId: currentUser.id,
@@ -109,7 +109,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     try {
       const resDraft = await fetch('/api/practicum/draft', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({
           ...formData,
           userId: currentUser.id,
@@ -122,7 +122,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
 
       const resPub = await fetch(`/api/practicum/${draftData.id}/publish`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({
           userId: currentUser.id,
           pjNim: currentUser.nim
@@ -147,7 +147,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     try {
       const res = await fetch(`/api/practicum/${id}/publish`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({
           userId: currentUser.id,
           pjNim: currentUser.nim
@@ -167,7 +167,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     try {
       const res = await fetch(`/api/practicum/${id}/cancel`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({
           userId: currentUser.id,
           pjNim: currentUser.nim
@@ -217,7 +217,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
     try {
       const res = await fetch('/api/projectors/borrow', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {}) },
         body: JSON.stringify({
           projectorCode: selectedProjectorCode,
           reservationId: loanModalRes.id,

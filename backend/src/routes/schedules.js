@@ -10,6 +10,7 @@ const {
   getFloorRoomsStatus
 } = require('../services/availabilityService');
 const { getWitaDateYMD } = require('../utils/timeUtils');
+const { requireAuth, requireRole, requireClassAccess } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -82,10 +83,10 @@ router.get('/availability', async (req, res) => {
   }
 });
 
-// Create schedule override (PJ only)
-router.post('/override', async (req, res) => {
+// Create schedule override (PJ or Petugas only)
+router.post('/override', requireAuth, requireRole(['PJ', 'PETUGAS']), async (req, res) => {
   try {
-    const { roomCode, date, courseName, status, notes, updatedBy } = req.body;
+    const { roomCode, date, courseName, status, notes } = req.body;
     if (!roomCode || !date || !status) {
       return res.status(400).json({ error: 'roomCode, date, and status are required' });
     }
@@ -95,7 +96,7 @@ router.post('/override', async (req, res) => {
       courseName,
       status,
       notes,
-      updatedBy
+      updatedBy: req.user.nim || req.user.name || 'PJ'
     });
     res.json(override);
   } catch (err) {
@@ -136,7 +137,7 @@ router.get('/by-class', async (req, res) => {
 });
 
 // PJ action: Online / Move Room / Reschedule (Change Date/Time) / Reset
-router.post('/class-override', async (req, res) => {
+router.post('/class-override', requireAuth, requireClassAccess, async (req, res) => {
   try {
     const {
       courseName,
@@ -147,8 +148,7 @@ router.post('/class-override', async (req, res) => {
       newRoomCode,
       newStartTime,
       newEndTime,
-      notes,
-      updatedBy
+      notes
     } = req.body;
 
     if (!courseName || !date || !action) {
@@ -165,7 +165,7 @@ router.post('/class-override', async (req, res) => {
       newStartTime,
       newEndTime,
       notes,
-      updatedBy
+      updatedBy: req.user.nim || req.user.name || 'PJ'
     });
 
     res.json(result);
@@ -174,8 +174,8 @@ router.post('/class-override', async (req, res) => {
   }
 });
 
-// Import excel
-router.post('/import-excel', async (req, res) => {
+// Import excel (Petugas only)
+router.post('/import-excel', requireAuth, requireRole(['PETUGAS']), async (req, res) => {
   try {
     // Only allow imported file from server root for security
     const filePath = path.resolve(__dirname, '../../../JADWAL KULIAH SEMESTER 3 2026 SI-A.xlsx');

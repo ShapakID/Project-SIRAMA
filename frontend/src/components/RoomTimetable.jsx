@@ -184,9 +184,13 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
         updatedBy: currentUser?.nim || currentUser?.username || 'PJ'
       };
 
+      const token = localStorage.getItem('sirama_token');
       const res = await fetch('/api/schedules/class-override', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       });
 
@@ -208,9 +212,13 @@ export default function RoomTimetable({ currentUser, onSelectSlot }) {
     }
 
     try {
+      const token = localStorage.getItem('sirama_token');
       const res = await fetch('/api/schedules/class-override', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           courseName: course.courseName,
           date: course.sourceDate || course.date,

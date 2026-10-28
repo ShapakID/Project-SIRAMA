@@ -7,6 +7,7 @@ const {
   returnProjectorByCode,
   getLoans
 } = require('../services/projectorService');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -39,9 +40,13 @@ router.get('/loans', async (req, res) => {
   }
 });
 
-router.post('/borrow', async (req, res) => {
+router.post('/borrow', requireAuth, async (req, res) => {
   try {
-    const loan = await borrowProjector(req.body);
+    const loan = await borrowProjector({
+      ...req.body,
+      pjNim: req.user.role === 'PJ' ? req.user.nim : (req.body.pjNim || req.user.nim),
+      pjName: req.user.role === 'PJ' ? req.user.name : (req.body.pjName || req.user.name)
+    });
     res.json(loan);
   } catch (err) {
     const status = err.status || 500;
@@ -49,7 +54,7 @@ router.post('/borrow', async (req, res) => {
   }
 });
 
-router.post('/loans/:id/return', async (req, res) => {
+router.post('/loans/:id/return', requireAuth, async (req, res) => {
   try {
     const { conditionNotes, isDamaged, releaseReservation } = req.body;
     const loan = await returnProjector(
@@ -65,7 +70,7 @@ router.post('/loans/:id/return', async (req, res) => {
   }
 });
 
-router.post('/:code/return', async (req, res) => {
+router.post('/:code/return', requireAuth, async (req, res) => {
   try {
     const { conditionNotes, isDamaged, releaseReservation } = req.body;
     const loan = await returnProjectorByCode(
