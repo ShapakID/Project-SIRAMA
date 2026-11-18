@@ -1,8 +1,0 @@
-.superpowers
-node_modules
-dist
-*.db
-*.db-journal
-*.log
-*.bundle
-.DS_Store
