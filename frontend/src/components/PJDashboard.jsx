@@ -484,7 +484,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
                     : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.25)] cursor-pointer'
                 }`}
               >
-                Terbitkan Langsung
+                Simpan Pengajuan
               </button>
             </div>
           </div>
@@ -544,7 +544,7 @@ export default function PJDashboard({ currentUser, initialRoom, onNavigateToFloo
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                      {item.status === 'DRAFT' && (
+                      {false && (
                         <button
                           onClick={() => handlePublish(item.id)}
                           className="px-3 py-1 bg-emerald-500 text-zinc-950 font-semibold rounded-lg hover:bg-emerald-400 transition cursor-pointer"

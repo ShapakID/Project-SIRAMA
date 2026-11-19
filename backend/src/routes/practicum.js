@@ -6,7 +6,7 @@ const {
   cancelReservation
 } = require('../services/practicumService');
 const { getCoursesBySemester, getCoursesByNim } = require('../utils/curriculum');
-const { requireAuth } = require('../middleware/authMiddleware');
+const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -47,7 +47,7 @@ router.post('/draft', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/:id/publish', requireAuth, async (req, res) => {
+router.post('/:id/publish', requireAuth, requireRole(['PETUGAS']), async (req, res) => {
   try {
     const item = await publishReservation(req.params.id);
     res.json(item);

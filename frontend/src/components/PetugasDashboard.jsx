@@ -100,6 +100,27 @@ export default function PetugasDashboard({ currentUser }) {
     }
   };
 
+  const handlePublishReservation = async (reservationId) => {
+    if (!window.confirm('Terbitkan reservasi ini? Status akan berubah ke PUBLISHED dan ruangan terkunci.')) return;
+    try {
+      const res = await fetch(`/api/practicum/${reservationId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localStorage.getItem('sirama_token') ? { 'Authorization': `Bearer ${localStorage.getItem('sirama_token')}` } : {})
+        }
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal menerbitkan reservasi');
+      }
+      setMessage({ text: 'Reservasi berhasil diterbitkan!', type: 'success' });
+      loadData();
+    } catch (err) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Alert Banner Once UI Glass */}
@@ -254,14 +275,26 @@ export default function PetugasDashboard({ currentUser }) {
                       </td>
                       <td className="py-3 px-3 text-right">
                         {r.status !== 'CANCELLED' && (
-                          <button
-                            type="button"
-                            onClick={() => handleCancelReservation(r.id)}
-                            className="px-2.5 py-1 text-[11px] font-mono text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 rounded-full transition"
-                            title="Batalkan reservasi jika terjadi pelanggaran atau bentrok"
-                          >
-                            Batalkan
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {r.status === 'DRAFT' && (
+                              <button
+                                type="button"
+                                onClick={() => handlePublishReservation(r.id)}
+                                className="px-2.5 py-1 text-[11px] font-mono text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 rounded-full transition"
+                                title="Terbitkan reservasi ini (hak Petugas)"
+                              >
+                                Terbitkan
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleCancelReservation(r.id)}
+                              className="px-2.5 py-1 text-[11px] font-mono text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 rounded-full transition"
+                              title="Batalkan reservasi jika terjadi pelanggaran atau bentrok"
+                            >
+                              Batalkan
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
